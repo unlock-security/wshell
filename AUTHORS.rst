@@ -1,5 +1,5 @@
 ==============
-HTTPie authors
+WShell authors
 ==============
 
 * `Francesco Marano <https://github.com/mrnfrancesco>`_

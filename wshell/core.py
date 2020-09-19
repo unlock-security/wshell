@@ -1,19 +1,138 @@
 import argparse
+import re
 import sys
 from typing import List, Union
 
+import wshell
+from wshell import validators, settings
 from wshell.status import ExitStatus
 
 
 # noinspection PyDefaultArgument
 def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     """
-    The main function.
-    Process arguments and run the main workflow with error handling.
-    Return exit status code.
-
+    Process arguments and run the main workflow.
+    :param args list of command line arguments to parse
+    :return exit status code.
     """
-    pass
+    # remove program name from args to not be confused as positional argument
+    program_name, *args = args
+
+    parser = argparse.ArgumentParser(
+        prog="wshell",
+        description="Turn a web-based {code,command,template} injection in a full featured shell with ease",
+        epilog='For every --ARGUMENT there is also a --no-ARGUMENT that reverts ARGUMENT',
+        add_help=True,
+        allow_abbrev=False
+    )
+    parser.add_argument(
+        "-v", "--version",
+        action="version",
+        version=f"%(prog)s v{wshell.__version__}",
+        help="Show the version number and exit"
+    )
+
+    # WShell specific parameters
+    parser.add_argument(
+        "--placeholder",
+        dest="command_placeholder",
+        type=validators.not_empty,
+        default=settings.DEFAULT_COMMAND_PLACEHOLDER,
+        help="Use a custom command placeholder (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--prompt",
+        dest="command_prompt",
+        default=settings.DEFAULT_COMMAND_PROMPT,
+        help="Use a custom command prompt (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--os",
+        default=None,
+        choices=["linux", "win-cmd", "win-psh"],
+        help="Specify OS and shell in use on the target (default: auto-discover)"
+    )
+
+    # HTTP-related parameters
+    http_group = parser.add_argument_group(title='HTTP arguments')
+    parser.add_argument(
+        "-m", "--method",
+        help="The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)"
+    )
+    http_group.add_argument(
+        "-t", "--timeout",
+        metavar="SECONDS",
+        type=float,
+        default=settings.DEFAULT_TIMEOUT,
+        help='The connection timeout of the request in seconds (default: %(default)s)'
+    )
+    follow_http_group = http_group.add_mutually_exclusive_group(required=False)
+    follow_http_group.add_argument(
+        "-f", "--follow",
+        default=settings.DEFAULT_ALLOW_REDIRECTS,
+        action="store_true",
+        dest="allow_redirects",
+        help="Follow 30x Location redirects (default: %(default)s)"
+    )
+    follow_http_group.add_argument(
+        "-nf", "--no-follow",
+        action="store_false",
+        dest="allow_redirects",
+        help=argparse.SUPPRESS
+    )
+    user_agent_http_group = http_group.add_mutually_exclusive_group(required=False)
+    user_agent_http_group.add_argument(
+        "-ua", "--user-agent",
+        default=settings.DEFAULT_USER_AGENT,
+        help="Use a custom User-Agent (default: %(default)s)"
+    )
+
+    # Positional parameters
+    parser.add_argument(
+        "url",
+        metavar="URL",
+        type=validators.http_url,
+        help="The endpoint URL where the injection is"
+    )
+    parser.add_argument(
+        "request_items",
+        metavar="REQUEST ITEMS",
+        nargs=argparse.ZERO_OR_MORE,
+        default=[],
+        help="POST data and headers ('key=value' for data, 'key:value' for headers)"
+    )
+
+    parsed_args = parser.parse_args(args=args)
+
+    # Parse positional arguments to extract POST data and headers
+    post_data_regex = re.compile(r"(?P<key>[\w\-.]+)=(?P<value>.*)")  # POST data are in the form "key=value"
+    headers_regex = re.compile(r"(?P<key>[\w\-.]+):(?P<value>.*)")  # HTTP headers are in the form "key:value"
+
+    post_data = dict()
+    headers = dict()
+
+    # Search for custom headers and/or POST data
+    for request_item in parsed_args.request_items:
+        match = post_data_regex.match(request_item)
+        if match:
+            post_data[match.group('key')] = match.group('value')
+            continue
+
+        match = headers_regex.match(request_item)
+        if match:
+            headers[match.group('key')] = match.group('value')
+            continue
+
+        parser.error(f"Unrecognized argument: {request_item}")
+
+    # Replace raw request items with parsed ones
+    del parsed_args.request_items
+    parsed_args.post_data = post_data
+    parsed_args.headers = headers
+
+    parsed_args.method = parsed_args.method or "POST" if post_data else "GET"
+
+    return program(parsed_args)
 
 
 def program(args: argparse.Namespace) -> ExitStatus:

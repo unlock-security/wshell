@@ -63,10 +63,10 @@ class BaseConfigDict(dict):
                 try:
                     data = json.load(f)
                 except ValueError as e:
-                    raise ConfigFileError(f"Invalid configuration file: {e} [{self.path}]")
+                    raise ConfigFileError(f"Invalid configuration file: {e}")
                 self.update(data)
-        except IOError as e:
-            raise ConfigFileError(f"Cannot read configuration file: {e}")
+        except OSError as e:
+            raise ConfigFileError(f"Cannot read configuration file: {e.strerror}")
 
     def save(self) -> None:
         """ Save the configuration to file in JSON format

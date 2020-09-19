@@ -97,3 +97,9 @@ class Config(BaseConfigDict):
         if file_path:
             file_path = Path(file_path)
         super().__init__(path=file_path)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __getattr__(self, item):
+        return self[item]

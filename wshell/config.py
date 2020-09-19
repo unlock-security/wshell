@@ -91,6 +91,7 @@ class BaseConfigDict(dict):
 class Config(BaseConfigDict):
     FILENAME = "config.json"
 
-    def __init__(self, directory: Union[str, Path] = DEFAULT_CONFIG_DIR):
-        self.directory = Path(directory)
-        super().__init__(path=self.directory / self.FILENAME)
+    def __init__(self, file_path: Union[str, Path] = DEFAULT_CONFIG_DIR / FILENAME):
+        if file_path:
+            file_path = Path(file_path)
+        super().__init__(path=file_path)

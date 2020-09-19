@@ -58,6 +58,8 @@ class BaseConfigDict(dict):
 
     def load(self):
         """ Load options from configuration file """
+        if not self.config_path:
+            return
 
         try:
             with self.config_path.open("rt") as f:
@@ -74,6 +76,8 @@ class BaseConfigDict(dict):
         :raise OSError: if it is not possible to create the config directory
         :raise IOError: if it is not possible to write to config file
         """
+        if not self.config_path:
+            return
 
         try:
             self.config_path.parent.mkdir(mode=0o700, parents=True)

@@ -54,12 +54,13 @@ class ConfigFileError(Exception):
 class BaseConfigDict(dict):
     def __init__(self, path: Path):
         super().__init__()
-        self.path = path
+        self.config_path = path
 
     def load(self):
         """ Load options from configuration file """
+
         try:
-            with self.path.open("rt") as f:
+            with self.config_path.open("rt") as f:
                 try:
                     data = json.load(f)
                 except ValueError as e:
@@ -73,8 +74,9 @@ class BaseConfigDict(dict):
         :raise OSError: if it is not possible to create the config directory
         :raise IOError: if it is not possible to write to config file
         """
+
         try:
-            self.path.parent.mkdir(mode=0o700, parents=True)
+            self.config_path.parent.mkdir(mode=0o700, parents=True)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -85,7 +87,7 @@ class BaseConfigDict(dict):
             sort_keys=True,
             ensure_ascii=True
         )
-        self.path.write_text(json_string)
+        self.config_path.write_text(json_string)
 
 
 class Config(BaseConfigDict):

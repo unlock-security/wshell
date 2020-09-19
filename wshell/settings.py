@@ -1,0 +1,13 @@
+import wshell
+
+
+# PAYLOAD
+DEFAULT_COMMAND_PLACEHOLDER = "^CMD^"
+
+# UI
+DEFAULT_COMMAND_PROMPT = "[wshell]$"
+
+# HTTP
+DEFAULT_TIMEOUT = 3.0
+DEFAULT_ALLOW_REDIRECTS = True
+DEFAULT_USER_AGENT = f"WShell v{wshell.__version__}"

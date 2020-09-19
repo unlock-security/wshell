@@ -34,6 +34,7 @@ setup(
     install_requires=[
         "cmd2>=1.3",
         "requests>=2.24",
+        "validator-collection>=1.4",
     ],
     platforms=["posix"],
     classifiers=[

@@ -5,6 +5,7 @@ from typing import List, Union
 
 import wshell
 from wshell import validators, settings
+from wshell.injectors import OSEnum
 from wshell.status import ExitStatus
 
 
@@ -49,7 +50,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parser.add_argument(
         "--os",
         default=None,
-        choices=["linux", "win-cmd", "win-psh"],
+        choices=[os.value for os in OSEnum.__members__.values()],
         help="Specify OS and shell in use on the target (default: auto-discover)"
     )
 
@@ -131,6 +132,9 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parsed_args.headers = headers
 
     parsed_args.method = parsed_args.method or "POST" if post_data else "GET"
+
+    if parsed_args.os:
+        parsed_args.os = OSEnum(parsed_args.os)
 
     return program(parsed_args)
 

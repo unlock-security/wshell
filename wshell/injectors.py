@@ -62,11 +62,11 @@ class CommandInjector:
         #   uid=0(root) gid=0(root) groups=0(root)
         #
         placeholder = hashlib.md5(f"wshell-{random.random()}".encode("utf-8")).hexdigest()
-        cmd = url_encode(f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder}")
+        cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder}"
 
         # We don't know where the command placeholder is, so just try to resolve it anywhere
         # (GET parameters, POST data and request headers)
-        url = self.url.replace(self.command_placeholder, cmd)
+        url = self.url.replace(self.command_placeholder, url_encode(cmd))
 
         headers = dict()
         for key, value in self.headers.items():

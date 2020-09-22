@@ -24,6 +24,7 @@ class CommandInjector:
     """ HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = None
     COMMAND_DELIMITER = ";"
+    PATH_DELIMITER = "/"
 
     def __init__(
             self,
@@ -136,11 +137,13 @@ class WindowsCmdCommandInjector(CommandInjector):
     """ Windows (with Command Prompt) HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.WIN_CMD
     COMMAND_DELIMITER = "&&"
+    PATH_DELIMITER = "\\"
 
 
 class WindowsPshCommandInjector(CommandInjector):
     """ Windows (with Powershell) HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.WIN_PSH
+    PATH_DELIMITER = "\\"
 
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):

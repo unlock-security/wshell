@@ -131,10 +131,17 @@ class CommandInjector:
         """ Return True if the remote target is detected as Windows """
         return self.is_windows_cmd() or self.is_windows_psh()
 
+    def change_directory(self, directory: str = ".") -> str:
+        """ Try to change directory and print the actual directory we are jumped in """
+        raise NotImplementedError
+
 
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.LINUX
+
+    def change_directory(self, directory: str = ".") -> str:
+        return self.execute(cmd="pwd", directory=directory).strip()
 
 
 class WindowsCmdCommandInjector(CommandInjector):
@@ -143,11 +150,28 @@ class WindowsCmdCommandInjector(CommandInjector):
     COMMAND_DELIMITER = "&&"
     PATH_DELIMITER = "\\"
 
+    def change_directory(self, directory: str = ".") -> str:
+        # If used with no arguments `cd` prints the current directory
+        return self.execute(cmd="cd", directory=directory).strip()
+
 
 class WindowsPshCommandInjector(CommandInjector):
     """ Windows (with Powershell) HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.WIN_PSH
     PATH_DELIMITER = "\\"
+
+    def change_directory(self, directory: str = ".") -> str:
+        # On Powershell `Get-Location` returns a multiline string like:
+        #
+        #   PS C:\Users\> Get-Location
+        #
+        #   Path
+        #   ----
+        #   C:\Users\
+        #
+        # If used in a string concatenation we get the path only
+        #
+        return self.execute(cmd="'' + (Get-Location)", directory=directory).strip()
 
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):

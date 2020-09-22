@@ -33,7 +33,7 @@ class WShellCmd(cmd2.Cmd):
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """
         self.history.append(statement)
-        cmd_output = self.injector.execute(cmd=statement.raw)
+        cmd_output = self.injector.execute(cmd=statement.raw, directory=self.current_directory)
         self.poutput(cmd_output, end='')
 
     def do_exit(self, line) -> bool:
@@ -48,3 +48,11 @@ class WShellCmd(cmd2.Cmd):
 
     def emptyline(self) -> bool:
         """ Do nothing on empty command """
+
+    def do_cd(self, line):
+        """ Change directory command implementation """
+        if line.startswith("."):
+            # To make `cd .` and `cd ..` works we need to prepend the current directory
+            line = f"{self.current_directory}{self.injector.PATH_DELIMITER}{line}"
+        self.current_directory = self.injector.change_directory(line)
+        self.poutput(self.current_directory)

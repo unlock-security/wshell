@@ -1,11 +1,13 @@
 import argparse
 import re
+import requests
 import sys
 from typing import List, Union
 
 import wshell
 from wshell import validators, settings
-from wshell.injectors import OSEnum
+from wshell.cli import WShellCmd
+from wshell.injectors import OSEnum, get_command_injector
 from wshell.status import ExitStatus
 
 
@@ -141,6 +143,23 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
 
 def program(args: argparse.Namespace) -> ExitStatus:
     """
-    The main program without error handling.
+    The main program.
+    Use the parsed arguments to start the wshell command loop
     """
-    pass
+    injector = get_command_injector(
+        os=args.os,
+        http=requests.Session(),
+        method=args.method,
+        url=args.url,
+        post_data=args.post_data,
+        headers=args.headers,
+        command_placeholder=args.command_placeholder
+    )
+
+    cmd = WShellCmd(
+        injector=injector,
+        command_prompt=args.command_prompt
+    )
+    cmd.cmdloop()
+
+    return ExitStatus.SUCCESS

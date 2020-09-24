@@ -29,8 +29,11 @@ class WShellCmd(cmd2.Cmd):
 
         self.injector = injector
         self.current_directory = self.injector.current_directory()
+
         if not command_prompt:
             self.prompt = self.injector.get_prompt()
+        # Add an ending single blank space to the command prompt if not already present
+        self.prompt = f"{self.prompt.strip()} "
 
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """

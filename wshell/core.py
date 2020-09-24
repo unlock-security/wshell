@@ -1,6 +1,7 @@
 import argparse
 import re
 import requests
+import requests.utils
 import sys
 from typing import List, Union
 
@@ -106,6 +107,8 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     )
 
     parsed_args = parser.parse_args(args=args)
+
+    requests.utils.default_user_agent = lambda: parsed_args.user_agent
 
     # Parse positional arguments to extract POST data and headers
     post_data_regex = re.compile(r"(?P<key>[\w\-.]+)=(?P<value>.*)")  # POST data are in the form "key=value"

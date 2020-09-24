@@ -32,6 +32,9 @@ class WShellCmd(cmd2.Cmd):
 
         if not command_prompt:
             self.prompt = self.injector.get_prompt()
+        else:
+            self.prompt = command_prompt
+
         # Add an ending single blank space to the command prompt if not already present
         self.prompt = f"{self.prompt.strip()} "
 

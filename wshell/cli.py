@@ -19,7 +19,7 @@ class WShellCmd(cmd2.Cmd):
     def __init__(
             self,
             injector: Union[LinuxCommandInjector, WindowsCmdCommandInjector, WindowsPshCommandInjector],
-            command_prompt: str = settings.DEFAULT_COMMAND_PROMPT
+            command_prompt: str = None
     ):
         super().__init__(
             allow_cli_args=False,     # To avoid using URL and HTTP parameters from the command line as commands
@@ -28,8 +28,9 @@ class WShellCmd(cmd2.Cmd):
         )
 
         self.injector = injector
-        self.prompt = command_prompt
         self.current_directory = self.injector.current_directory()
+        if not command_prompt:
+            self.prompt = self.injector.get_prompt()
 
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """

@@ -46,8 +46,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parser.add_argument(
         "--prompt",
         dest="command_prompt",
-        default=settings.DEFAULT_COMMAND_PROMPT,
-        help="Use a custom command prompt (default: %(default)s)"
+        help="Use a custom command prompt"
     )
     parser.add_argument(
         "--os",

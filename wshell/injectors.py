@@ -140,6 +140,10 @@ class CommandInjector:
         """ Return the current working directory """
         return self.change_directory()
 
+    def get_prompt(self):
+        """ Get the specific prompt string for the target OS """
+        raise NotImplementedError
+
 
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """
@@ -147,6 +151,13 @@ class LinuxCommandInjector(CommandInjector):
 
     def change_directory(self, directory: str = ".") -> str:
         return self.execute(cmd="pwd", directory=directory)
+
+    def get_prompt(self):
+        # Outputs like "www-data@target:/var/www/html$"
+        username = self.execute("whoami")
+        hostname = self.execute("hostname")
+        path = self.current_directory()
+        return f"{username}@{hostname}:{path}$"
 
 
 class WindowsCmdCommandInjector(CommandInjector):
@@ -158,6 +169,10 @@ class WindowsCmdCommandInjector(CommandInjector):
     def change_directory(self, directory: str = ".") -> str:
         # If used with no arguments `cd` prints the current directory
         return self.execute(cmd="cd", directory=directory)
+
+    def get_prompt(self):
+        # Outputs like "C:\Users\wshell>"
+        return f"{self.current_directory()}>"
 
 
 class WindowsPshCommandInjector(CommandInjector):
@@ -177,6 +192,10 @@ class WindowsPshCommandInjector(CommandInjector):
         # If used in a string concatenation we get the path only
         #
         return self.execute(cmd="'' + (Get-Location)", directory=directory)
+
+    def get_prompt(self):
+        # Outputs like "PS C:\Users\wshell>"
+        return f"PS {self.current_directory()}>"
 
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):

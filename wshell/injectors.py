@@ -83,7 +83,7 @@ class CommandInjector:
             post_data[key] = value.replace(self.command_placeholder, cmd)
 
         try:
-            response = requests.request(self.method, url, data=post_data, headers=headers)
+            response = self.http.request(self.method, url, data=post_data, headers=headers)
         except requests.exceptions.ConnectionError as e:
             raise TargetUnreachableError(e)
 

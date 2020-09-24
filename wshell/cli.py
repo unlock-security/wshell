@@ -29,6 +29,7 @@ class WShellCmd(cmd2.Cmd):
 
         self.injector = injector
         self.prompt = command_prompt
+        self.current_directory = self.injector.current_directory()
 
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """

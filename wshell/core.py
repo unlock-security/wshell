@@ -7,6 +7,7 @@ from typing import List, Union
 import wshell
 from wshell import validators, settings
 from wshell.cli import WShellCmd
+from wshell.errors import WShellError
 from wshell.injectors import OSEnum, get_command_injector
 from wshell.status import ExitStatus
 
@@ -145,20 +146,23 @@ def program(args: argparse.Namespace) -> ExitStatus:
     The main program.
     Use the parsed arguments to start the wshell command loop
     """
-    injector = get_command_injector(
-        os=args.os,
-        http=requests.Session(),
-        method=args.method,
-        url=args.url,
-        post_data=args.post_data,
-        headers=args.headers,
-        command_placeholder=args.command_placeholder
-    )
+    try:
+        injector = get_command_injector(
+            os=args.os,
+            http=requests.Session(),
+            method=args.method,
+            url=args.url,
+            post_data=args.post_data,
+            headers=args.headers,
+            command_placeholder=args.command_placeholder
+        )
 
-    cmd = WShellCmd(
-        injector=injector,
-        command_prompt=args.command_prompt
-    )
-    cmd.cmdloop()
+        WShellCmd(
+            injector=injector,
+            command_prompt=args.command_prompt
+        ).cmdloop()
+    except WShellError as error:
+        print(f"{error.__class__.__name__}: {error}", file=sys.stderr)
+        return error.EXIT_STATUS
 
     return ExitStatus.SUCCESS

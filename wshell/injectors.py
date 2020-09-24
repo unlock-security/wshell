@@ -7,7 +7,7 @@ from typing import Optional, Dict
 from urllib.parse import quote as url_encode
 
 from wshell import settings
-from wshell.errors import CommandExecutionError, OsDetectionError
+from wshell.errors import CommandExecutionError, OsDetectionError, TargetUnreachableError
 
 # Disable warnings related to unverified SSL certs
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -47,6 +47,7 @@ class CommandInjector:
         """ Execute the specified command on the target
         :param cmd: the command to execute
         :param directory: the remote directory where to execute the command
+        :param strip: whether the output has to be stripped
         :return: the output of the command from the target
         :raise :class:`requests.exceptions.RequestException` in case of connection errors
         :raise :class:`requests.excptions.Timeout` in case of timeout expiration
@@ -81,7 +82,10 @@ class CommandInjector:
         for key, value in self.post_data.items():
             post_data[key] = value.replace(self.command_placeholder, cmd)
 
-        response = requests.request(self.method, url, data=post_data, headers=headers)
+        try:
+            response = requests.request(self.method, url, data=post_data, headers=headers)
+        except requests.exceptions.ConnectionError as e:
+            raise TargetUnreachableError(e)
 
         match = re.search(
             fr"{placeholder}(?:\r?\n)(?P<command_output>.*?){placeholder}(?:\r?\n)",

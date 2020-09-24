@@ -1,7 +1,6 @@
 import cmd2
 from typing import Union
 
-from wshell import settings
 from wshell.injectors import LinuxCommandInjector, WindowsCmdCommandInjector, WindowsPshCommandInjector
 
 

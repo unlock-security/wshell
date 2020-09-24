@@ -1,6 +1,7 @@
 """ A collection of validators to use in argument parsing """
 
 import argparse
+import requests.utils
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
 from urllib.parse import urlparse
@@ -8,24 +9,26 @@ from urllib.parse import urlparse
 
 def http_url(value: str) -> str:
     """ Validate an HTTP(s) URL
+    If no scheme is provided HTTP is used as default
     :param value: The value to validate
     :raise argparse.ArgumentTypeError if the value is not an URL or URL scheme is not HTTP nor HTTPS
     :return value if it is valid
     """
+    url = requests.utils.prepend_scheme_if_needed(url=value, new_scheme="http")
     try:
         validators.url(
-            value,
+            url,
             allow_empty=False,
             allow_special_ips=True
         )
     except InvalidURLError:
-        raise argparse.ArgumentTypeError(f"Invalid URL: {value}")
+        raise argparse.ArgumentTypeError(f"Invalid URL: {url}")
     else:
-        scheme = urlparse(value).scheme
+        scheme = urlparse(url).scheme
         if scheme not in ["http", "https"]:
             raise argparse.ArgumentTypeError(f"Invalid URL scheme: {scheme}")
 
-    return value
+    return url
 
 
 def not_empty(value: str) -> str:

@@ -154,10 +154,7 @@ class LinuxCommandInjector(CommandInjector):
 
     def get_prompt(self):
         # Outputs like "www-data@target:/var/www/html$"
-        username = self.execute("whoami")
-        hostname = self.execute("hostname")
-        path = self.current_directory()
-        return f"{username}@{hostname}:{path}$"
+        return self.execute('echo -n "$(whoami)@$(hostname):$(pwd)\\$"')
 
 
 class WindowsCmdCommandInjector(CommandInjector):

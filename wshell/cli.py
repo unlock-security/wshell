@@ -37,6 +37,9 @@ class WShellCmd(cmd2.Cmd):
         # Add an ending single blank space to the command prompt if not already present
         self.prompt = f"{self.prompt.strip()} "
 
+        # Command aliases
+        self.do_logout = self.do_exit
+
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """
         self.history.append(statement)

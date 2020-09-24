@@ -135,6 +135,10 @@ class CommandInjector:
         """ Try to change directory and print the actual directory we are jumped in """
         raise NotImplementedError
 
+    def current_directory(self):
+        """ Return the current working directory """
+        return self.change_directory()
+
 
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """

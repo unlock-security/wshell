@@ -104,7 +104,7 @@ class CommandInjector:
         #   Linux:       'wshell\n'
         #   Windows CMD: 'wsh${WSHELL}ell\r\n'
         #   Windows PSH: 'wshell\r\n'
-        cmd_output = self.execute("echo wsh${WSHELL}ell")
+        cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
         if cmd_output == "wshell\n":
             self.OS = OSEnum.LINUX
         elif cmd_output == "wsh${WSHELL}ell\r\n":
@@ -146,7 +146,7 @@ class LinuxCommandInjector(CommandInjector):
     OS = OSEnum.LINUX
 
     def change_directory(self, directory: str = ".") -> str:
-        return self.execute(cmd="pwd", directory=directory).strip()
+        return self.execute(cmd="pwd", directory=directory)
 
 
 class WindowsCmdCommandInjector(CommandInjector):
@@ -157,7 +157,7 @@ class WindowsCmdCommandInjector(CommandInjector):
 
     def change_directory(self, directory: str = ".") -> str:
         # If used with no arguments `cd` prints the current directory
-        return self.execute(cmd="cd", directory=directory).strip()
+        return self.execute(cmd="cd", directory=directory)
 
 
 class WindowsPshCommandInjector(CommandInjector):
@@ -176,7 +176,7 @@ class WindowsPshCommandInjector(CommandInjector):
         #
         # If used in a string concatenation we get the path only
         #
-        return self.execute(cmd="'' + (Get-Location)", directory=directory).strip()
+        return self.execute(cmd="'' + (Get-Location)", directory=directory)
 
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):

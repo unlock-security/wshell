@@ -35,7 +35,7 @@ class WShellCmd(cmd2.Cmd):
         """ In case the user typed a non-builtin command, send it to the target. """
         self.history.append(statement)
         cmd_output = self.injector.execute(cmd=statement.raw, directory=self.current_directory)
-        self.poutput(cmd_output, end='')
+        self.poutput(cmd_output)
 
     def do_exit(self, line) -> bool:
         """ Exit from wshell """

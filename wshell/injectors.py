@@ -43,7 +43,7 @@ class CommandInjector:
 
         self.command_placeholder = command_placeholder
 
-    def execute(self, cmd: str, directory: str = ".") -> str:
+    def execute(self, cmd: str, directory: str = ".", strip: bool = True) -> str:
         """ Execute the specified command on the target
         :param cmd: the command to execute
         :param directory: the remote directory where to execute the command
@@ -92,7 +92,8 @@ class CommandInjector:
         if not match:
             raise CommandExecutionError("Failed to parse command output")
 
-        return match.group("command_output")
+        command_output = match.group("command_output")
+        return command_output if not strip else command_output.strip()
 
     def _detect_os(self) -> OSEnum:
         """ Try to identify the remote OS and return the appropriate injector """

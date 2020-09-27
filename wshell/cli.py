@@ -1,7 +1,7 @@
 import cmd2
 from typing import Union
 
-from wshell.injectors import LinuxCommandInjector, WindowsCmdCommandInjector, WindowsPshCommandInjector
+from wshell.injectors import CommandInjector
 
 
 # noinspection PyMethodMayBeStatic,PyUnusedLocal
@@ -17,7 +17,7 @@ class WShellCmd(cmd2.Cmd):
 
     def __init__(
             self,
-            injector: Union[LinuxCommandInjector, WindowsCmdCommandInjector, WindowsPshCommandInjector],
+            injector: CommandInjector
             command_prompt: str = None
     ):
         super().__init__(

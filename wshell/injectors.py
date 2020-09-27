@@ -25,6 +25,7 @@ class CommandInjector:
     OS = None
     COMMAND_DELIMITER = ";"
     PATH_DELIMITER = "/"
+    CURRENT_DIRECTORY_COMMAND = ""
 
     def __init__(
             self,
@@ -152,6 +153,7 @@ class CommandInjector:
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.LINUX
+    CURRENT_DIRECTORY_COMMAND = "pwd"
 
     def change_directory(self, directory: str = ".") -> str:
         return self.execute(cmd="pwd", directory=directory)
@@ -166,6 +168,7 @@ class WindowsCmdCommandInjector(CommandInjector):
     OS = OSEnum.WIN_CMD
     COMMAND_DELIMITER = "&&"
     PATH_DELIMITER = "\\"
+    CURRENT_DIRECTORY_COMMAND = "cd"
 
     def change_directory(self, directory: str = ".") -> str:
         # If used with no arguments `cd` prints the current directory
@@ -180,6 +183,17 @@ class WindowsPshCommandInjector(CommandInjector):
     """ Windows (with Powershell) HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.WIN_PSH
     PATH_DELIMITER = "\\"
+    # On Powershell `Get-Location` returns a multiline string like:
+    #
+    #   PS C:\Users\> Get-Location
+    #
+    #   Path
+    #   ----
+    #   C:\Users\
+    #
+    # If used in a string concatenation we get the path only
+    #
+    CURRENT_DIRECTORY_COMMAND = "'' + (Get-Location)"
 
     def change_directory(self, directory: str = ".") -> str:
         # On Powershell `Get-Location` returns a multiline string like:

@@ -149,7 +149,7 @@ class CommandInjector:
 
     def current_directory(self):
         """ Return the current working directory """
-        return self.change_directory()
+        return self.change_directory(".")
 
     def get_prompt(self):
         """ Get the specific prompt string for the target OS """

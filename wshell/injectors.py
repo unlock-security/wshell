@@ -182,7 +182,7 @@ class WindowsCmdCommandInjector(CommandInjector):
 
     def get_prompt(self):
         # Outputs like "C:\Users\wshell>"
-        return f"{self.current_directory()}>"
+        return f"{self.current_directory()}> "
 
 
 class WindowsPshCommandInjector(CommandInjector):
@@ -203,7 +203,7 @@ class WindowsPshCommandInjector(CommandInjector):
 
     def get_prompt(self):
         # Outputs like "PS C:\Users\wshell>"
-        return f"PS {self.current_directory()}>"
+        return f"PS {self.current_directory()}> "
 
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):

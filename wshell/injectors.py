@@ -44,6 +44,8 @@ class CommandInjector:
 
         self.command_placeholder = command_placeholder
 
+        self.cwd = "."
+
     def execute(self, cmd: str, directory: str = ".", strip: bool = True) -> str:
         """ Execute the specified command on the target
         :param cmd: the command to execute

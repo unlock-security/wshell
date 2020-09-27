@@ -18,7 +18,6 @@ class WShellCmd(cmd2.Cmd):
     def __init__(
             self,
             injector: CommandInjector
-            command_prompt: str = None
     ):
         super().__init__(
             allow_cli_args=False,     # To avoid using URL and HTTP parameters from the command line as commands
@@ -27,14 +26,7 @@ class WShellCmd(cmd2.Cmd):
         )
 
         self.injector = injector
-
-        if not command_prompt:
-            self.prompt = self.injector.get_prompt()
-        else:
-            self.prompt = command_prompt
-
-        # Add an ending single blank space to the command prompt if not already present
-        self.prompt = f"{self.prompt.strip()} "
+        self.prompt = self.injector.get_prompt()
 
         # Command aliases
         self.do_logout = self.do_exit

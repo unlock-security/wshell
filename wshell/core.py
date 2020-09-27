@@ -46,11 +46,6 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         help="Use a custom command placeholder (default: %(default)s)"
     )
     parser.add_argument(
-        "--prompt",
-        dest="command_prompt",
-        help="Use a custom command prompt"
-    )
-    parser.add_argument(
         "--os",
         default=None,
         choices=[os.value for os in OSEnum.__members__.values()],
@@ -161,8 +156,7 @@ def program(args: argparse.Namespace) -> ExitStatus:
         )
 
         WShellCmd(
-            injector=injector,
-            command_prompt=args.command_prompt
+            injector=injector
         ).cmdloop()
     except WShellError as error:
         print(f"{error.__class__.__name__}: {error}", file=sys.stderr)

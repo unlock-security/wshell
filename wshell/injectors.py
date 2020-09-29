@@ -1,4 +1,3 @@
-from abc import ABC
 from enum import Enum
 import hashlib
 import random
@@ -21,7 +20,7 @@ class OSEnum(Enum):
     WIN_PSH = "win-psh"
 
 
-class CommandInjector(ABC):
+class CommandInjector:
     """ HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = None
     COMMAND_DELIMITER = ";"

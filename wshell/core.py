@@ -85,6 +85,11 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         default=settings.DEFAULT_USER_AGENT,
         help="Use a custom User-Agent (default: %(default)s)"
     )
+    user_agent_http_group.add_argument(
+        "-r", "--random-agent",
+        dest="use_random_agent",
+        action="store_true"
+    )
 
     # Positional parameters
     parser.add_argument(

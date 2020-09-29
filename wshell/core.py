@@ -108,7 +108,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         help="POST data and headers ('key=value' for data, 'key:value' for headers)"
     )
 
-    parsed_args = parser.parse_args(args=args)
+    parsed_args = parser.parse_intermixed_args(args=args)
 
     if parsed_args.use_random_agent:
         # Pick a random user-agent excluding empty and comment lines

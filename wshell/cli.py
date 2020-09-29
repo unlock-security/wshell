@@ -1,5 +1,4 @@
 import cmd2
-from typing import Union
 
 from wshell.injectors import CommandInjector
 

@@ -1,4 +1,6 @@
 import argparse
+import os
+import random
 import re
 import requests
 import requests.utils
@@ -48,7 +50,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parser.add_argument(
         "--os",
         default=None,
-        choices=[os.value for os in OSEnum.__members__.values()],
+        choices=[_os.value for _os in OSEnum.__members__.values()],
         help="Specify OS and shell in use on the target (default: auto-discover)"
     )
 
@@ -85,6 +87,11 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         default=settings.DEFAULT_USER_AGENT,
         help="Use a custom User-Agent (default: %(default)s)"
     )
+    user_agent_http_group.add_argument(
+        "-r", "--random-agent",
+        dest="use_random_agent",
+        action="store_true"
+    )
 
     # Positional parameters
     parser.add_argument(
@@ -102,6 +109,13 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     )
 
     parsed_args = parser.parse_args(args=args)
+
+    if parsed_args.use_random_agent:
+        # Pick a random user-agent excluding empty and comment lines
+        with open(os.path.join(wshell.DATA_DIR, "user-agents.txt"), "r") as f:
+            parsed_args.user_agent = random.choice(
+                [line for line in f.read().splitlines() if line and not line.startswith("#")]
+            )
 
     requests.utils.default_user_agent = lambda: parsed_args.user_agent
 

@@ -90,7 +90,8 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     user_agent_http_group.add_argument(
         "-r", "--random-agent",
         dest="use_random_agent",
-        action="store_true"
+        action="store_true",
+        help="Use a random valid browser User-Agent"
     )
 
     # Positional parameters

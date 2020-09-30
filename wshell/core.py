@@ -67,6 +67,20 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         default=settings.DEFAULT_TIMEOUT,
         help='The connection timeout of the request in seconds (default: %(default)s)'
     )
+    persistent_connection_http_group = http_group.add_mutually_exclusive_group(required=False)
+    persistent_connection_http_group.add_argument(
+        "-k", "--keep-alive",
+        action="store_true",
+        dest="reuse_connection",
+        default=settings.DEFAULT_REUSE_CONNECTION,
+        help="Use persistent connection (default: %(default)s)"
+    )
+    persistent_connection_http_group.add_argument(
+        "-nk", "--no-keep-alive",
+        action="store_false",
+        dest="reuse_connection",
+        help=argparse.SUPPRESS
+    )
     follow_http_group = http_group.add_mutually_exclusive_group(required=False)
     follow_http_group.add_argument(
         "-f", "--follow",
@@ -162,7 +176,7 @@ def program(args: argparse.Namespace) -> ExitStatus:
     try:
         injector = get_command_injector(
             os=args.os,
-            http=requests.Session(),
+            reuse_connection=args.reuse_connection,
             method=args.method,
             url=args.url,
             post_data=args.post_data,

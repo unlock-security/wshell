@@ -29,14 +29,14 @@ class CommandInjector:
 
     def __init__(
             self,
-            http: requests.Session,
+            reuse_connection: bool,
             method: str,
             url: str,
             post_data: Optional[Dict[str, str]] = None,
             headers: Optional[Dict[str, str]] = None,
             command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER
     ):
-        self.http = http
+        self.http = requests.Session() if reuse_connection else requests
         self.url = url
         self.headers = headers
         self.post_data = post_data

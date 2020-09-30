@@ -63,7 +63,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     http_group.add_argument(
         "-t", "--timeout",
         metavar="SECONDS",
-        type=float,
+        type=validators.positive_float,
         default=settings.DEFAULT_TIMEOUT,
         help='The connection timeout of the request in seconds (default: %(default)s)'
     )

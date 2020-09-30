@@ -176,6 +176,8 @@ def program(args: argparse.Namespace) -> ExitStatus:
     try:
         injector = get_command_injector(
             os=args.os,
+            allow_redirects=args.allow_redirects,
+            timeout=args.timeout,
             reuse_connection=args.reuse_connection,
             method=args.method,
             url=args.url,

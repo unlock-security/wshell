@@ -30,6 +30,8 @@ class CommandInjector:
     def __init__(
             self,
             reuse_connection: bool,
+            allow_redirects: bool,
+            timeout: float,
             method: str,
             url: str,
             post_data: Optional[Dict[str, str]] = None,
@@ -37,6 +39,8 @@ class CommandInjector:
             command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER
     ):
         self.http = requests.Session() if reuse_connection else requests
+        self.allow_redirects = allow_redirects
+        self.timeout = timeout
         self.url = url
         self.headers = headers
         self.post_data = post_data
@@ -85,7 +89,14 @@ class CommandInjector:
             post_data[key] = value.replace(self.command_placeholder, cmd)
 
         try:
-            response = self.http.request(self.method, url, data=post_data, headers=headers)
+            response = self.http.request(
+                self.method,
+                url,
+                data=post_data,
+                headers=headers,
+                allow_redirects=self.allow_redirects,
+                timeout=self.timeout
+            )
         except requests.exceptions.ConnectionError as e:
             raise TargetUnreachableError(e)
 

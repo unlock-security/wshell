@@ -69,28 +69,28 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     )
     persistent_connection_http_group = http_group.add_mutually_exclusive_group(required=False)
     persistent_connection_http_group.add_argument(
-        "-k", "--keep-alive",
+        "--keep-alive",
         action="store_true",
         dest="reuse_connection",
         default=settings.DEFAULT_REUSE_CONNECTION,
         help="Use persistent connection (default: %(default)s)"
     )
     persistent_connection_http_group.add_argument(
-        "-nk", "--no-keep-alive",
+        "--no-keep-alive",
         action="store_false",
         dest="reuse_connection",
         help=argparse.SUPPRESS
     )
     follow_http_group = http_group.add_mutually_exclusive_group(required=False)
     follow_http_group.add_argument(
-        "-f", "--follow",
+        "--follow",
         default=settings.DEFAULT_ALLOW_REDIRECTS,
         action="store_true",
         dest="allow_redirects",
         help="Follow 30x Location redirects (default: %(default)s)"
     )
     follow_http_group.add_argument(
-        "-nf", "--no-follow",
+        "--no-follow",
         action="store_false",
         dest="allow_redirects",
         help=argparse.SUPPRESS

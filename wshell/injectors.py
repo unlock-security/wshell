@@ -190,7 +190,7 @@ class LinuxCommandInjector(CommandInjector):
 class WindowsCmdCommandInjector(CommandInjector):
     """ Windows (with Command Prompt) HTTP Client with RCE capabilities via {code,command,template} injection """
     OS = OSEnum.WIN_CMD
-    COMMAND_DELIMITER = "&&"
+    COMMAND_DELIMITER = "&"
     PATH_DELIMITER = "\\"
     CURRENT_DIRECTORY_COMMAND = "cd"
 

@@ -107,6 +107,20 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         action="store_true",
         help="Use a random valid browser User-Agent"
     )
+    post_data_http_group = http_group.add_mutually_exclusive_group(required=False)
+    post_data_http_group.add_argument(
+        "-j", "--json",
+        dest="use_json_post_data",
+        action="store_true",
+        default=settings.DEFAULT_USE_JSON_POST_DATA,
+        help="Data items from the command line are serialized as a JSON object (default: %(default)s)"
+    )
+    post_data_http_group.add_argument(
+        "-f", "--form",
+        dest="use_json_post_data",
+        action="store_false",
+        help="Data items from the command line are serialized as form fields"
+    )
 
     # Positional parameters
     parser.add_argument(
@@ -179,6 +193,7 @@ def program(args: argparse.Namespace) -> ExitStatus:
             allow_redirects=args.allow_redirects,
             timeout=args.timeout,
             reuse_connection=args.reuse_connection,
+            use_json_post_data=args.use_json_post_data,
             method=args.method,
             url=args.url,
             post_data=args.post_data,

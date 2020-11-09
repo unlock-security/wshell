@@ -219,7 +219,7 @@ def program(args: argparse.Namespace) -> ExitStatus:
             injector=injector
         ).cmdloop()
     except WShellError as error:
-        print(f"{error.__class__.__name__}: {error}", file=sys.stderr)
+        logger.error(f"{error.__class__.__name__}: {error}")
         return error.EXIT_STATUS
 
     return ExitStatus.SUCCESS

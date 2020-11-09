@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import random
 import re
@@ -12,6 +13,7 @@ from wshell import validators, settings
 from wshell.cli import WShellCmd
 from wshell.errors import WShellError
 from wshell.injectors import OSEnum, get_command_injector
+from wshell.log import logger
 from wshell.status import ExitStatus
 
 
@@ -122,6 +124,15 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         help="Data items from the command line are serialized as form fields"
     )
 
+    log_group = parser.add_argument_group(title="Logging arguments")
+    log_group.add_argument(
+        "--log",
+        dest="log_level",
+        choices=["critical", "error", "warning", "info", "debug"],
+        default=settings.DEFAULT_LOG_LEVEL,
+        help="To specify the log messages level"
+    )
+
     # Positional parameters
     parser.add_argument(
         "url",
@@ -138,6 +149,9 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     )
 
     parsed_args = parser.parse_intermixed_args(args=args)
+
+    # Specify the log level to the WShell root logger
+    logger.setLevel(logging.getLevelName(parsed_args.log_level.upper()))
 
     if parsed_args.use_random_agent:
         # Pick a random user-agent excluding empty and comment lines

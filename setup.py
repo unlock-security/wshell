@@ -35,6 +35,7 @@ setup(
         "cmd2>=1.3",
         "requests>=2.24",
         "validator-collection>=1.4",
+        "colorlog>=4.6"
     ],
     platforms=["posix"],
     classifiers=[

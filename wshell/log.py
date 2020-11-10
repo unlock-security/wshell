@@ -1,11 +1,21 @@
-import logging
+import colorlog
 import sys
 
+logger = colorlog.getLogger("wshell")
 
-logger = logging.getLogger("wshell")
-
-logger_handler = logging.StreamHandler(sys.stderr)
-logger_formatter = logging.Formatter(fmt="[%(asctime)s] [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
-logger_handler.setFormatter(logger_formatter)
-
+logger_handler = colorlog.StreamHandler(sys.stderr)
+logger_handler.setFormatter(
+    colorlog.ColoredFormatter(
+        fmt="[%(thin_cyan)s%(asctime)s%(reset)s] [%(log_color)s%(levelname)s%(reset)s] %(message)s",
+        datefmt="%H:%M:%S",
+        reset=True,
+        log_colors={
+            'DEBUG':    'purple',
+            'INFO':     'green',
+            'WARNING':  'yellow',
+            'ERROR':    'red',
+            'CRITICAL': 'red,bg_white',
+        }
+    )
+)
 logger.addHandler(logger_handler)

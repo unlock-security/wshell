@@ -188,7 +188,9 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parsed_args.post_data = post_data
     parsed_args.headers = headers
 
-    parsed_args.method = parsed_args.method or "POST" if post_data else "GET"
+    if not parsed_args.method:
+        parsed_args.method = "POST" if post_data else "GET"
+        logger.info(f"HTTP verb not specified. Using '{parsed_args.method}' based on parameters")
 
     if parsed_args.os:
         parsed_args.os = OSEnum(parsed_args.os)

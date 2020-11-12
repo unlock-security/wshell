@@ -136,14 +136,20 @@ class CommandInjector:
         if cmd_output == "wshell\n":
             self.OS = OSEnum.LINUX
             logger.info("Target OS detected as Linux")
-        elif cmd_output == "wsh${WSHELL}ell\r\n":
-            self.OS = OSEnum.WIN_CMD
-            logger.info("Target OS detected as Windows (Command prompt)")
         elif cmd_output == "wshell\r\n":
             logger.info("Target OS detected as Windows (Powershell)")
             self.OS = OSEnum.WIN_PSH
         else:
-            raise OsDetectionError(f"Unrecognized output: '{cmd_output}'")
+            # We need to re-execute the command due to different command delimiters
+            # used by Linux/Powershell (;) and Command Prompt (&)
+            # (See issue #9) for details
+            self.COMMAND_DELIMITER = WindowsCmdCommandInjector.COMMAND_DELIMITER
+            cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
+            if cmd_output == "wsh${WSHELL}ell\r\n":
+                self.OS = OSEnum.WIN_CMD
+                logger.info("Target OS detected as Windows (Command prompt)")
+            else:
+                raise OsDetectionError(f"Unrecognized output: '{cmd_output}'")
 
         return self.OS
 

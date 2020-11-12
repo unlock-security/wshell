@@ -132,14 +132,15 @@ class CommandInjector:
         #   Windows CMD: 'wsh${WSHELL}ell\r\n'
         #   Windows PSH: 'wshell\r\n'
         logger.info("Target OS not specified, trying to automatically detect it")
-        cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
-        if cmd_output == "wshell\n":
-            self.OS = OSEnum.LINUX
-            logger.info("Target OS detected as Linux")
-        elif cmd_output == "wshell\r\n":
-            logger.info("Target OS detected as Windows (Powershell)")
-            self.OS = OSEnum.WIN_PSH
-        else:
+        try:
+            cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
+            if cmd_output == "wshell\n":
+                self.OS = OSEnum.LINUX
+                logger.info("Target OS detected as Linux")
+            elif cmd_output == "wshell\r\n":
+                logger.info("Target OS detected as Windows (Powershell)")
+                self.OS = OSEnum.WIN_PSH
+        except CommandExecutionError:
             # We need to re-execute the command due to different command delimiters
             # used by Linux/Powershell (;) and Command Prompt (&)
             # (See issue #9) for details

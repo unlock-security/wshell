@@ -26,6 +26,11 @@ class WShellCmd(cmd2.Cmd):
             shortcuts={'?': 'help', '!': 'shell'}
         )
 
+        # It seems that cmd2's alias and macro cannot be disabled at class level
+        # due to some reference in the __init__() function
+        delattr(cmd2.Cmd, "do_alias")
+        delattr(cmd2.Cmd, "do_macro")
+
         self.injector = injector
         self.prompt = self.injector.get_prompt()
 

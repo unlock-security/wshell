@@ -32,6 +32,16 @@ class WShellCmd(cmd2.Cmd):
         # Command aliases
         self.do_logout = self.do_exit
 
+        # Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD)
+        # to get file content as base64 to avoid some issues when manipulating
+        # the output (eg. escape \n)
+        if self.injector.is_windows():
+            self.do_type = self.base64_cat
+            self.hidden_commands.append("type")
+        if not self.injector.is_windows_cmd():
+            self.do_cat = self.base64_cat
+            self.hidden_commands.append("cat")
+
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """
         self.history.append(statement)

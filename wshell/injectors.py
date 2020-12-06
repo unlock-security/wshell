@@ -188,6 +188,9 @@ class CommandInjector:
         """ Get the specific prompt string for the target OS """
         raise NotImplementedError
 
+    def base64_cat(self, filename: str) -> str:
+        raise NotImplementedError
+
 
 class LinuxCommandInjector(CommandInjector):
     """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """

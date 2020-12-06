@@ -243,6 +243,11 @@ class WindowsPshCommandInjector(CommandInjector):
         # Outputs like "PS C:\Users\wshell>"
         return f"PS {self.current_directory()}> "
 
+    def base64_cat(self, filename: str) -> str:
+        return self.execute(
+            f"$file_content = Get-Content '{filename}'; [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($file_content))"
+        )
+
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):
     """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """

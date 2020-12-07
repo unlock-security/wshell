@@ -199,7 +199,10 @@ class LinuxCommandInjector(CommandInjector):
 
     def get_prompt(self):
         # Outputs like "www-data@target:/var/www/html$ "
-        return self.execute('echo -n "$(whoami)@$(hostname):$(pwd)\\$ "', strip=False)
+        user = self.execute('whoami', strip=True)
+        host = self.execute('hostname', strip=True)
+        pwd  = self.execute('pwd', strip=True)
+        return f"{user}@{host}:{pwd}{'$' if user != 'root' else '#'} "
 
     def change_directory(self, directory: str) -> str:
         # Make `cd` with no arguments works

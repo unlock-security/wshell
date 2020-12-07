@@ -61,7 +61,7 @@ class CommandInjector:
         :param strip: whether the output has to be stripped
         :return: the output of the command from the target
         :raise :class:`requests.exceptions.RequestException` in case of connection errors
-        :raise :class:`requests.excptions.Timeout` in case of timeout expiration
+        :raise :class:`requests.exceptions.Timeout` in case of timeout expiration
         """
 
         # The command to run is wrapped around some placeholder to be able to correctly identify the command output

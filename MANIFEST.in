@@ -1,4 +1,0 @@
-include LICENSE
-include data/user-agents.txt
-
-global-exclude *.py[cod]

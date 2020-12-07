@@ -29,7 +29,10 @@ setup(
             "wshell = wshell.__main__:main"
         ],
     },
-    include_package_data=True,
+    data_files=[
+        ("", ["LICENSE"]),
+        ("data", ["data/user-agents.txt"]),
+    ],
     python_requires=">=3.5",
     install_requires=[
         "cmd2>=1.3",

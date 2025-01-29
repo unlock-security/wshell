@@ -2,11 +2,14 @@
 WShell authors
 ==============
 
-* `Francesco Marano <https://github.com/mrnfrancesco>`_
+* `Francesco Marano (@mrnfrancesco) <https://github.com/mrnfrancesco>`_
 
 
 Patches and ideas
 -----------------
 
-`Complete list of contributors on GitHub <https://github.com/mrnfrancesco/wshell/graphs/contributors>`_
+* `Federico (@coval3nte) <https://github.com/coval3nte>`_
+
+
+`Complete list of contributors on GitHub <https://github.com/unlock-security/wshell/graphs/contributors>`_
 

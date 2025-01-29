@@ -9,12 +9,12 @@ from urllib.parse import quote as url_encode
 from wshell import settings, utils
 from wshell.errors import CommandExecutionError, OsDetectionError, TargetUnreachableError
 
-# Disable warnings related to unverified SSL certs
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import urllib3
 
 from wshell.log import logger
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+# Disable warnings related to unverified SSL certs
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class OSEnum(Enum):

@@ -1,0 +1,14 @@
+{
+    "editor.formatOnSave": true,
+    "debug.console.closeOnEnd": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+        "source.unusedImports": "always",
+        "source.organizeImports.ruff": "always"
+    },
+    "python.createEnvironment.contentButton": "show",
+    "python.terminal.activateEnvironment": true,
+    "python.createEnvironment.trigger": "prompt",
+    "ruff.importStrategy": "fromEnvironment",
+    "python.terminal.activateEnvInCurrentTerminal": true
+}

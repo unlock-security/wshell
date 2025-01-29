@@ -180,7 +180,7 @@ class CommandInjector:
         logger.debug(f"Directory changed to: {self.cwd}")
         return self.cwd
 
-    def current_directory(self):
+    def current_directory(self) -> str:
         """ Return the current working directory """
         return self.change_directory(".")
 

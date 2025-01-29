@@ -3,13 +3,14 @@ import logging
 import os
 import random
 import re
-import requests
-import requests.utils
 import sys
 from typing import List, Union
 
+import requests
+import requests.utils
+
 import wshell
-from wshell import validators, settings
+from wshell import settings, validators
 from wshell.cli import WShellCmd
 from wshell.errors import WShellError
 from wshell.injectors import OSEnum, get_command_injector

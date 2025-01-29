@@ -1,16 +1,22 @@
-from enum import Enum
+import argparse
 import hashlib
 import random
 import re
-import requests
-from typing import Optional, Dict
+from argparse import Namespace
+from enum import Enum
+from typing import Dict, Iterable, Optional
 from urllib.parse import quote as url_encode
 
-from wshell import settings, utils
-from wshell.errors import CommandExecutionError, OsDetectionError, TargetUnreachableError
-
+import requests
 import urllib3
+from cmd2 import with_argparser
 
+from wshell import settings, utils
+from wshell.errors import (
+    CommandExecutionError,
+    OsDetectionError,
+    TargetUnreachableError,
+)
 from wshell.log import logger
 
 # Disable warnings related to unverified SSL certs

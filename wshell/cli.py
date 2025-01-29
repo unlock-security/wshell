@@ -1,6 +1,7 @@
-import cmd2
 from base64 import b64decode
 from binascii import Error as BinasciiError
+
+import cmd2
 
 from wshell.injectors import CommandInjector
 

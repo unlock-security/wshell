@@ -14,14 +14,14 @@ setup(
     description=wshell.__doc__.strip(),
     long_description=long_description(),
     keywords="shell,webshell,command injection,security,ctf-tools,penetration testing,rce,remote code execution",
-    url="https://github.com/mrnfrancesco/wshell",
+    url="https://github.com/unlock-security/wshell",
     project_urls={
-        "Source Code": "https://github.com/mrnfrancesco/wshell",
-        "Issue Tracker": "https://github.com/mrnfrancesco/wshell/issues"
+        "Source Code": "https://github.com/unlock-security/wshell",
+        "Issue Tracker": "https://github.com/unlock-security/wshell/issues"
     },
-    download_url=f"https://github.com/mrnfrancesco/wshell/archive/{wshell.__version__}.tar.gz",
-    author=wshell.__author__,
-    author_email="francesco.mrn24@gmail.com",
+    download_url=f"https://github.com/unlock-security/wshell/archive/{wshell.__version__}.tar.gz",
+    author="Francesco Marano (@mrnfrancesco)",
+    author_email="francesco.marano@unlock-security.it",
     license="GPLv3",
     packages=["wshell"],
     entry_points={

@@ -11,7 +11,9 @@ Install
 
     git clone https://github.com/unlock-security/wshell
     cd wshell/
-    python3 setup.py install --user
+    python3 -m virtualenv .venv
+    source .venv/bin/activate
+    pip install -e .
 
 
 Usage

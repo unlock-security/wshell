@@ -110,6 +110,7 @@ class CommandInjector:
                 headers=headers,
                 allow_redirects=self.allow_redirects,
                 timeout=self.timeout,
+                verify=False,
                 **post_data
             )
         except requests.exceptions.ConnectionError as e:

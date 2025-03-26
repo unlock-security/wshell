@@ -83,6 +83,10 @@ class CommandInjector:
         #
         placeholder = hashlib.md5(f"wshell-{random.random()}".encode("utf-8")).hexdigest()
         logger.debug(f"Using placeholder: {placeholder}")
+
+        # Remove any comment to avoid problems with placeholders in the resulting final command
+        cmd = self._remove_comments(cmd)
+
         # To make `cd` command works over HTTP shell we need to change to the desired directory
         # before the execution of every command
         cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
@@ -128,6 +132,10 @@ class CommandInjector:
 
         command_output = match.group("command_output")
         return command_output if not strip else command_output.strip()
+
+    def _remove_comments(self, cmd: str) -> str:
+        """ Remove any commented out part of the command """
+        return re.sub(r"#.*$", "", cmd, flags=re.MULTILINE)
 
     def _detect_os(self) -> OSEnum:
         """ Try to identify the remote OS and return the appropriate injector """
@@ -227,6 +235,14 @@ class WindowsCmdCommandInjector(CommandInjector):
     COMMAND_DELIMITER = "&"
     PATH_DELIMITER = "\\"
     CURRENT_DIRECTORY_COMMAND = "cd"
+
+    def _remove_comments(self, cmd: str) -> str:
+        # Matches:
+        #   REM <comment>
+        #   @REM <comment>
+        #   :: <comment>
+        #   command& REM <comment>
+        return re.sub(r"(&\s*)?(@?REM|::).*$", "", cmd, flags=re.MULTILINE|re.IGNORECASE)
 
     def get_prompt(self):
         # Outputs like "C:\Users\wshell>"

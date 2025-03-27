@@ -40,6 +40,8 @@ class WShellCmd(cmd2.Cmd):
         self.do_exit = self.do_quit
         self.do_logout = self.do_quit
 
+        # Hide alias and overridden commands from help menu
+        self.hidden_commands.extend(["cd", "exit", "logout"])
 
         # Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD)
         # to get file content as base64 to avoid some issues when manipulating

@@ -1,7 +1,7 @@
 import hashlib
 import random
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Dict, Optional
 from urllib.parse import quote as url_encode
 
@@ -20,7 +20,7 @@ from wshell.log import logger
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class OSEnum(Enum):
+class OSEnum(StrEnum):
     LINUX = "linux"
     WIN_CMD = "win-cmd"
     WIN_PSH = "win-psh"

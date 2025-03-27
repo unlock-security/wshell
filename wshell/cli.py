@@ -11,10 +11,10 @@ class WShellCmd(cmd2.Cmd):
     """ The wshell command loop shell """
 
     # Disable cmd2.Cmd advanced features we do not need (for now)
-    delattr(cmd2.Cmd, "do__relative_run_script")
-    delattr(cmd2.Cmd, "do_run_pyscript")
-    delattr(cmd2.Cmd, "do_run_script")
-    delattr(cmd2.Cmd, "do_shortcuts")
+    del cmd2.Cmd.do__relative_run_script
+    del cmd2.Cmd.do_run_pyscript
+    del cmd2.Cmd.do_run_script
+    del cmd2.Cmd.do_shortcuts
 
     def __init__(
             self,
@@ -29,8 +29,8 @@ class WShellCmd(cmd2.Cmd):
 
         # It seems that cmd2's alias and macro cannot be disabled at class level
         # due to some reference in the __init__() function
-        delattr(cmd2.Cmd, "do_alias")
-        delattr(cmd2.Cmd, "do_macro")
+        del cmd2.Cmd.do_alias
+        del cmd2.Cmd.do_macro
 
         self.injector = injector
         self.prompt = self.injector.get_prompt()

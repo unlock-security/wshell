@@ -23,6 +23,7 @@ class WShellCmd(cmd2.Cmd):
         super().__init__(
             allow_cli_args=False,     # To avoid using URL and HTTP parameters from the command line as commands
             allow_redirection=False,  # Disable output redirection ('>', '>>' and '|') to forward it to the target
+            allow_clipboard=False,    # Disable clipboard support (it may interfere with commands sent to the target)
             shortcuts={'?': 'help', '!': 'shell'}
         )
 

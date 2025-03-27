@@ -162,7 +162,7 @@ class CommandInjector:
                 self.OS = OSEnum.WIN_CMD
                 logger.info("Target OS detected as Windows (Command prompt)")
             else:
-                raise OsDetectionError(f"Unrecognized output: '{cmd_output}'")
+                raise OsDetectionError(f"Unrecognized output: {repr(cmd_output)}")
 
         return self.OS
 

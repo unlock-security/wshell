@@ -58,6 +58,8 @@ class CommandInjector:
 
         self.cwd = "."
 
+        self._detect_os()
+
     def execute(self, cmd: str, strip: bool = True) -> str:
         """ Execute the specified command on the target
         :param cmd: the command to execute
@@ -291,18 +293,16 @@ class WindowsPshCommandInjector(CommandInjector):
 
 def get_command_injector(os: OSEnum = None, *args, **kwargs):
     """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """
-    if not os:
+    if os is None:
         injector = CommandInjector(*args, **kwargs)
-        if injector.is_linux():
-            return LinuxCommandInjector(*args, **kwargs)
-        elif injector.is_windows_cmd():
-            return WindowsCmdCommandInjector(*args, **kwargs)
-        elif injector.is_windows_psh():
-            return WindowsPshCommandInjector(*args, **kwargs)
+        os = injector.OS
+
+    os_injector_map = {
+        OSEnum.LINUX: LinuxCommandInjector,
+        OSEnum.WIN_CMD: WindowsCmdCommandInjector,
+        OSEnum.WIN_PSH: WindowsPshCommandInjector
+    }
+    if os in os_injector_map:
+        return os_injector_map[os](*args, **kwargs)
     else:
-        if os is OSEnum.LINUX:
-            return LinuxCommandInjector(*args, **kwargs)
-        elif os is OSEnum.WIN_CMD:
-            return WindowsCmdCommandInjector(*args, **kwargs)
-        elif os is OSEnum.WIN_PSH:
-            return WindowsPshCommandInjector(*args, **kwargs)
+        raise OsDetectionError(f"Unknown OS: {os}")

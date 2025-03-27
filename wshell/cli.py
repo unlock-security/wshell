@@ -33,6 +33,11 @@ class WShellCmd(cmd2.Cmd):
         del cmd2.Cmd.do_alias
         del cmd2.Cmd.do_macro
 
+        # Hide most of built-in settings (unused by wshell)
+        interesting_settings = [ "debug", "timing" ]
+        for setting in set(self.settables) - set(interesting_settings):
+            self.remove_settable(setting)
+
         self.injector = injector
         self.prompt = self.injector.get_prompt()
 

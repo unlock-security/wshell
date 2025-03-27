@@ -62,7 +62,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parser.add_argument(
         "--os",
         default=None,
-        choices=[_os.value for _os in OSEnum.__members__.values()],
+        choices=[*OSEnum],
         help="Specify OS and shell in use on the target (default: auto-discover)"
     )
 

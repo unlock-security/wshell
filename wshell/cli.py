@@ -15,7 +15,6 @@ class WShellCmd(cmd2.Cmd):
     delattr(cmd2.Cmd, "do_run_pyscript")
     delattr(cmd2.Cmd, "do_run_script")
     delattr(cmd2.Cmd, "do_shortcuts")
-    delattr(cmd2.Cmd, "do_py")
 
     def __init__(
             self,

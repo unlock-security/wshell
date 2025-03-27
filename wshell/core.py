@@ -58,7 +58,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
 
     # HTTP-related parameters
     http_group = parser.add_argument_group(title='HTTP arguments')
-    parser.add_argument(
+    http_group.add_argument(
         "-m", "--method",
         help="The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)"
     )

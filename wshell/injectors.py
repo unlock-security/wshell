@@ -1,15 +1,12 @@
-import argparse
 import hashlib
 import random
 import re
-from argparse import Namespace
 from enum import Enum
-from typing import Dict, Iterable, Optional
+from typing import Dict, Optional
 from urllib.parse import quote as url_encode
 
 import requests
 import urllib3
-from cmd2 import with_argparser
 
 from wshell import settings, utils
 from wshell.errors import (

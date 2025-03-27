@@ -88,7 +88,8 @@ class CommandInjector:
         # before the execution of every command
         cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
         logger.debug(f"Executing command: {cmd}")
-        cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder}"
+        # See issue #17 to know why the leading blank space is necessary. Do not remove it.
+        cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "
 
         # We don't know where the command placeholder is, so just try to resolve it anywhere
         # (GET parameters, POST data and request headers)

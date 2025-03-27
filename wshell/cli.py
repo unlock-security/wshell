@@ -36,7 +36,9 @@ class WShellCmd(cmd2.Cmd):
         self.prompt = self.injector.get_prompt()
 
         # Command aliases
-        self.do_logout = self.do_exit
+        self.do_exit = self.do_quit
+        self.do_logout = self.do_quit
+
 
         # Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD)
         # to get file content as base64 to avoid some issues when manipulating
@@ -53,16 +55,6 @@ class WShellCmd(cmd2.Cmd):
         self.history.append(statement)
         cmd_output = self.injector.execute(cmd=statement.raw)
         self.poutput(cmd_output)
-
-    def do_exit(self, line) -> bool:
-        """ Exit from wshell """
-        return True
-
-    # noinspection PyPep8Naming
-    def do_EOF(self, line) -> bool:
-        """ Exit from wshell by pressing CTRL+D """
-        self.poutput("^D")
-        return True
 
     def emptyline(self) -> bool:
         """ Do nothing on empty command """

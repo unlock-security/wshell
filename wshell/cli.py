@@ -15,6 +15,7 @@ class WShellCmd(cmd2.Cmd):
     del cmd2.Cmd.do_run_pyscript
     del cmd2.Cmd.do_run_script
     del cmd2.Cmd.do_shortcuts
+    del cmd2.Cmd.do_edit
 
     def __init__(
             self,

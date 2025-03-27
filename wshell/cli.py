@@ -41,10 +41,10 @@ class WShellCmd(cmd2.Cmd):
         # Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD)
         # to get file content as base64 to avoid some issues when manipulating
         # the output (eg. escape \n)
-        if self.injector.is_windows():
+        if self.injector.is_windows_cmd():
             self.do_type = self.base64_cat
             self.hidden_commands.append("type")
-        if not self.injector.is_windows_cmd():
+        else:
             self.do_cat = self.base64_cat
             self.hidden_commands.append("cat")
 

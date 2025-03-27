@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import random
 import re
@@ -152,7 +151,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     parsed_args = parser.parse_intermixed_args(args=args)
 
     # Specify the log level to the WShell root logger
-    logger.setLevel(logging.getLevelName(parsed_args.log_level.upper()))
+    logger.setLevel(parsed_args.log_level.upper())
 
     if parsed_args.use_random_agent:
         # Pick a random user-agent excluding empty and comment lines

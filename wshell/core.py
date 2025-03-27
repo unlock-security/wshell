@@ -5,7 +5,9 @@ import re
 import sys
 import textwrap
 from typing import List, Union
+from urllib.parse import urlparse
 
+import platformdirs
 import requests
 import requests.utils
 
@@ -205,6 +207,15 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     if parsed_args.os:
         parsed_args.os = OSEnum(parsed_args.os)
 
+    # Extract host domain to persist history on specific file
+    host = urlparse(parsed_args.url).hostname
+    history_file = os.path.join(
+        platformdirs.user_data_dir(parser.prog),
+        "history",
+        f"{host}.json"
+    )
+    parsed_args.history_file = history_file
+
     return program(parsed_args)
 
 
@@ -228,7 +239,8 @@ def program(args: argparse.Namespace) -> ExitStatus:
         )
 
         WShellCmd(
-            injector=injector
+            injector=injector,
+            persistent_history_file=args.history_file
         ).cmdloop()
     except WShellError as error:
         logger.error(f"{error.__class__.__name__}: {error}")

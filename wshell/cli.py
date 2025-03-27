@@ -19,13 +19,15 @@ class WShellCmd(cmd2.Cmd):
 
     def __init__(
             self,
-            injector: CommandInjector
+            injector: CommandInjector,
+            persistent_history_file=None
     ):
         super().__init__(
             allow_cli_args=False,     # To avoid using URL and HTTP parameters from the command line as commands
             allow_redirection=False,  # Disable output redirection ('>', '>>' and '|') to forward it to the target
             allow_clipboard=False,    # Disable clipboard support (it may interfere with commands sent to the target)
-            shortcuts={'?': 'help', '!': 'shell'}
+            shortcuts={'?': 'help', '!': 'shell'},
+            persistent_history_file=persistent_history_file
         )
 
         # It seems that cmd2's alias and macro cannot be disabled at class level

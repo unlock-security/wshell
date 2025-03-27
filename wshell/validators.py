@@ -1,10 +1,11 @@
 """ A collection of validators to use in argument parsing """
 
 import argparse
+from urllib.parse import urlparse
+
 import requests.utils
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
-from urllib.parse import urlparse
 
 
 def http_url(value: str) -> str:
@@ -38,7 +39,7 @@ def not_empty(value: str) -> str:
     :return value if it is valid
     """
     if not value:
-        raise argparse.ArgumentTypeError(f"Cannot use empty value")
+        raise argparse.ArgumentTypeError("Cannot use empty value")
 
     return value
 

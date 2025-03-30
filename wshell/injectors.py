@@ -98,6 +98,10 @@ class CommandInjector:
         # See issue #17 to know why the leading blank space is necessary. Do not remove it.
         cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "
 
+        # Run input scripts, if any, in the same order as the user specified
+        for script in self.input_scripts:
+            cmd = script(cmd)
+
         # We don't know where the command placeholder is, so just try to resolve it anywhere
         # (GET parameters, POST data and request headers)
         url = self.url.replace(self.command_placeholder, url_encode(cmd))

@@ -136,7 +136,9 @@ class CommandInjector:
             output = script(output)
 
         match = re.search(
-            fr"{placeholder}(?:\r?\n)(?P<command_output>.*?){placeholder}(?:\r?\n)",
+            # In case output is base64 encoded, newlines are replaced with spaces and it is
+            # necessary to manually specify the underlying OS to make it works
+            fr"{placeholder}(?:\r?\n|\ )(?P<command_output>.*?){placeholder}(?:\r?\n|\ )",
             output,
             re.DOTALL
         )

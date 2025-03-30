@@ -84,6 +84,6 @@ class WShellCmd(cmd2.Cmd):
         # the error message to the user.
         try:
             # Merge all the lines in one to avoid base64 validation errors
-            self.poutput(b64decode("".join(base64_output.splitlines()), validate=True).decode(encoding='utf-8'))
+            self.poutput(b64decode("".join(base64_output.splitlines()), validate=True).decode(encoding='utf-8', errors='replace'))
         except BinasciiError:
             self.poutput(base64_output)

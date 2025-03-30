@@ -2,7 +2,7 @@ import hashlib
 import random
 import re
 from enum import StrEnum
-from typing import Dict, Optional
+from typing import Callable, Dict, List, Optional
 from urllib.parse import quote as url_encode
 
 import requests
@@ -43,7 +43,9 @@ class CommandInjector:
             url: str,
             post_data: Optional[Dict[str, str]] = None,
             headers: Optional[Dict[str, str]] = None,
-            command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER
+            command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
+            input_scripts: Optional[List[Callable[[str], str]]] = [],
+            output_scripts: Optional[List[Callable[[str], str]]] = []
     ):
         self.http = requests.Session() if reuse_connection else requests
         self.allow_redirects = allow_redirects
@@ -55,6 +57,9 @@ class CommandInjector:
         self.method = method
 
         self.command_placeholder = command_placeholder
+
+        self.input_scripts = input_scripts
+        self.output_scripts = output_scripts
 
         self.cwd = "."
 

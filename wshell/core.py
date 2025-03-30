@@ -273,7 +273,9 @@ def program(args: argparse.Namespace) -> ExitStatus:
             url=args.url,
             post_data=args.post_data,
             headers=args.headers,
-            command_placeholder=args.command_placeholder
+            command_placeholder=args.command_placeholder,
+            input_scripts=args.input_scripts,
+            output_scripts=args.output_scripts
         )
 
         WShellCmd(

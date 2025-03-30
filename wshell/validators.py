@@ -1,11 +1,14 @@
 """ A collection of validators to use in argument parsing """
 
 import argparse
+from typing import Callable, Dict, List
 from urllib.parse import urlparse
 
 import requests.utils
 from validator_collection import validators
 from validator_collection.errors import InvalidURLError
+
+from wshell.scripts import input_scripts, output_scripts
 
 
 def http_url(value: str) -> str:
@@ -59,3 +62,33 @@ def positive_float(value: str) -> float:
         raise argparse.ArgumentTypeError("Value must be greater than zero")
 
     return value
+
+def _scripts_chain(scripts_chain: str, valid_scripts: Dict[str, Callable[[str], str]]) -> List[Callable[[str], str]]:
+    """ Validate a scripts chain
+    :param scripts_chain: The comma-separated scripts chain to validate
+    :param valid_scripts: A dictionary of valid scripts
+    :raise argparse.ArgumentTypeError if the scripts chain is not valid
+    :return A list of callable scripts based on scripts_chain
+    """
+    scripts_chain = scripts_chain.split(",")
+    invalid_scripts = set(scripts_chain) - set(valid_scripts.keys())
+    if invalid_scripts:
+        raise argparse.ArgumentTypeError(f"Invalid scripts: {', '.join(invalid_scripts)}")
+
+    return [valid_scripts[script] for script in scripts_chain]
+
+def input_scripts_chain(scripts_chain: str) -> List[Callable[[str], str]]:
+    """ Validate an input scripts chain
+    :param scripts_chain: The comma-separated input scripts chain to validate
+    :raise argparse.ArgumentTypeError if any of the input scripts chain element is not valid
+    :return A list of callable input scripts based on scripts_chain
+    """
+    return _scripts_chain(scripts_chain, input_scripts)
+
+def output_scripts_chain(scripts_chain: str) -> List[Callable[[str], str]]:
+    """ Validate an output scripts chain
+    :param scripts_chain: The comma-separated output scripts chain to validate
+    :raise argparse.ArgumentTypeError if any of the output scripts chain element is not valid
+    :return A list of callable output scripts based on scripts_chain
+    """
+    return _scripts_chain(scripts_chain, output_scripts)

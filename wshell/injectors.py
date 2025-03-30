@@ -129,14 +129,20 @@ class CommandInjector:
         except requests.exceptions.ConnectionError as e:
             raise TargetUnreachableError(e)
 
+        output = response.text
+
+        # Run output scripts, if any, in the same order as the user specified
+        for script in self.output_scripts:
+            output = script(output)
+
         match = re.search(
             fr"{placeholder}(?:\r?\n)(?P<command_output>.*?){placeholder}(?:\r?\n)",
-            response.text,
+            output,
             re.DOTALL
         )
 
         if not match:
-            logger.debug(f"Got unexpected HTTP response:\n{response.text}")
+            logger.debug(f"Got unexpected HTTP response:\n{output}")
             raise CommandExecutionError("Failed to parse command output")
 
         command_output = match.group("command_output")

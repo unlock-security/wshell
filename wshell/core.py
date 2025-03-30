@@ -153,6 +153,22 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         help="List the available scripts to manipulate input/output"
     )
 
+    scripts_group.add_argument(
+        "--input-scripts",
+        dest="input_scripts",
+        default=[],
+        type=validators.input_scripts_chain,
+        help="Use one or more custom input script (comma separated, order matters)"
+    )
+
+    scripts_group.add_argument(
+        "--output-scripts",
+        dest="output_scripts",
+        default=[],
+        type=validators.output_scripts_chain,
+        help="Use one or more custom output script (comma separated, order matters)"
+    )
+
     # Positional parameters
     parser.add_argument(
         "url",

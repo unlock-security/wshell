@@ -2,7 +2,7 @@ import hashlib
 import random
 import re
 from enum import StrEnum
-from typing import Dict, Optional
+from typing import Callable, Dict, List, Optional
 from urllib.parse import quote as url_encode
 
 import requests
@@ -43,7 +43,9 @@ class CommandInjector:
             url: str,
             post_data: Optional[Dict[str, str]] = None,
             headers: Optional[Dict[str, str]] = None,
-            command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER
+            command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
+            input_scripts: Optional[List[Callable[[str], str]]] = [],
+            output_scripts: Optional[List[Callable[[str], str]]] = []
     ):
         self.http = requests.Session() if reuse_connection else requests
         self.allow_redirects = allow_redirects
@@ -55,6 +57,9 @@ class CommandInjector:
         self.method = method
 
         self.command_placeholder = command_placeholder
+
+        self.input_scripts = input_scripts
+        self.output_scripts = output_scripts
 
         self.cwd = "."
 
@@ -93,6 +98,10 @@ class CommandInjector:
         # See issue #17 to know why the leading blank space is necessary. Do not remove it.
         cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "
 
+        # Run input scripts, if any, in the same order as the user specified
+        for script in self.input_scripts:
+            cmd = script(cmd)
+
         # We don't know where the command placeholder is, so just try to resolve it anywhere
         # (GET parameters, POST data and request headers)
         url = self.url.replace(self.command_placeholder, url_encode(cmd))
@@ -120,14 +129,20 @@ class CommandInjector:
         except requests.exceptions.ConnectionError as e:
             raise TargetUnreachableError(e)
 
+        output = response.text
+
+        # Run output scripts, if any, in the same order as the user specified
+        for script in self.output_scripts:
+            output = script(output)
+
         match = re.search(
             fr"{placeholder}(?:\r?\n)(?P<command_output>.*?){placeholder}(?:\r?\n)",
-            response.text,
+            output,
             re.DOTALL
         )
 
         if not match:
-            logger.debug(f"Got unexpected HTTP response:\n{response.text}")
+            logger.debug(f"Got unexpected HTTP response:\n{output}")
             raise CommandExecutionError("Failed to parse command output")
 
         command_output = match.group("command_output")

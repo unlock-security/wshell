@@ -17,6 +17,7 @@ from wshell.cli import WShellCmd
 from wshell.errors import WShellError
 from wshell.injectors import OSEnum, get_command_injector
 from wshell.log import logger
+from wshell.scripts import input_scripts, output_scripts
 from wshell.status import ExitStatus
 
 
@@ -145,6 +146,13 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         help="To specify the log messages level"
     )
 
+    scripts_group = parser.add_argument_group(title="Input/Output scripts")
+    scripts_group.add_argument(
+        "--list-scripts",
+        action="store_true",
+        help="List the available scripts to manipulate input/output"
+    )
+
     # Positional parameters
     parser.add_argument(
         "url",
@@ -159,6 +167,20 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         default=[],
         help="POST data and headers ('key=value' for data, 'key:value' for headers)"
     )
+
+    # Pre-parsing of arguments
+    # Note: argparse is not flexible enough to have an argument with precedence over
+    #       required positional arguments, so we have to check manually
+    if "-h" not in args and "--help" not in args:
+        # If the user asked for the scripts list, print it and exit
+        if "--list-scripts" in args:
+            for script_type, scripts in [("Input scripts", input_scripts), ("Output scripts", output_scripts)]:
+                print(f"{script_type}:")
+                for script_name, func in scripts.items():
+                    print(f"  {script_name} - {func.__doc__}")
+                print()
+
+            return ExitStatus.SUCCESS
 
     parsed_args = parser.parse_intermixed_args(args=args)
 

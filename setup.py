@@ -33,13 +33,13 @@ setup(
         ("", ["LICENSE"]),
         ("data", ["data/user-agents.txt"]),
     ],
-    python_requires=">=3.5",
+    python_requires="==3.13.2",
     install_requires=[
-        "cmd2>=1.3",
-        "requests>=2.24",
-        "validator-collection>=1.4",
-        "colorlog>=4.6",
-        "platformdirs>=4.3.7"
+        "cmd2==2.5.11",
+        "requests==2.32.3",
+        "validator-collection==1.5.0",
+        "colorlog==6.9.0",
+        "platformdirs==4.3.7"
     ],
     platforms=["posix"],
     classifiers=[

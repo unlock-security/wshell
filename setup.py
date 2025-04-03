@@ -23,7 +23,7 @@ setup(
     author="Francesco Marano (@mrnfrancesco)",
     author_email="francesco.marano@unlock-security.it",
     license="GPLv3",
-    packages=["wshell"],
+    package_dir={"wshell": "wshell"},
     entry_points={
         "console_scripts": [
             "wshell = wshell.__main__:main"

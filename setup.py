@@ -4,7 +4,7 @@ import wshell
 
 
 def long_description():
-    with open("README.rst", encoding="utf8") as f:
+    with open("README.md", encoding="utf8") as f:
         return f.read()
 
 
@@ -13,6 +13,7 @@ setup(
     version=wshell.__version__,
     description=wshell.__doc__.strip(),
     long_description=long_description(),
+    long_description_content_type="text/markdown",
     keywords="shell,webshell,command injection,security,ctf-tools,penetration testing,rce,remote code execution",
     url="https://github.com/unlock-security/wshell",
     project_urls={

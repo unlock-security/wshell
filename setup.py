@@ -19,7 +19,6 @@ setup(
         "Source Code": "https://github.com/unlock-security/wshell",
         "Issue Tracker": "https://github.com/unlock-security/wshell/issues"
     },
-    download_url=f"https://github.com/unlock-security/wshell/archive/{wshell.__version__}.tar.gz",
     author="Francesco Marano (@mrnfrancesco)",
     author_email="francesco.marano@unlock-security.it",
     license="GPLv3",

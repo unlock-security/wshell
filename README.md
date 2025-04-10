@@ -1,5 +1,9 @@
 # WShell
 
+![Python 3](https://img.shields.io/badge/python-3-green.svg?style=for-the-badge&logo=python&logoColor=white&link=https%3A%2F%2Fwww.python.org)
+![WShell License](https://img.shields.io/github/license/unlock-security/wshell?style=for-the-badge&label=License&link=https%3A%2F%2Fgithub.com%2Funlock-security%2Fwshell%3Ftab%3DGPL-3.0-1-ov-file%23GPL-3.0-1-ov-file)
+![Made by Unlock Security](https://img.shields.io/badge/Made_by-Unlock_Security-blue.svg?style=for-the-badge&link=https%3A%2F%2Fwww.unlock-security.it)
+
 WShell lets you turn a web-based {code,command,template} injection in a full-featured shell with ease.
 
 ## How it works

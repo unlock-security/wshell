@@ -1,6 +1,5 @@
 import wshell
 
-
 # PAYLOAD
 DEFAULT_COMMAND_PLACEHOLDER = "WSHELL"
 

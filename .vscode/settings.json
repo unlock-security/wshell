@@ -10,5 +10,6 @@
     "python.terminal.activateEnvironment": true,
     "python.createEnvironment.trigger": "prompt",
     "ruff.importStrategy": "fromEnvironment",
-    "python.terminal.activateEnvInCurrentTerminal": true
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "explorer.excludeGitIgnore": true
 }

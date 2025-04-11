@@ -26,7 +26,7 @@ def load_scripts(package: str, path: str) -> Dict[str, Callable[[str], str]]:
             # Valid function signature is: run(str) -> str
             if func.__code__.co_argcount == 1 \
                 and all(arg_type is str for arg_type in func.__annotations__.values()) \
-                and func.__doc__ is not None:
+                and func.__doc__ is not None and func.__doc__.strip() != "":
                     scripts[module_info.name] = func
 
     return scripts

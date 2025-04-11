@@ -145,13 +145,15 @@ We accept contributions of any kind, including bug fixes, feature requests, and 
 If you want to contribute to this project you can just:
 
 1. Fork the repository
-2. Make your changes
-3. Open a Pull Request
+2. Start a new branch starting from `dev`
+3. Make your changes
+4. Open a Pull Request
 
 When you open a Pull Request, please make sure to follow the next rules:
 
 -   Write a clear and descriptive title
 -   In the description, write a clear and detailed explanation of the changes
+-   There are no conflicts in merging your branch on `dev`
 -   If you are fixing a bug, please reference the issue number
 
 ---

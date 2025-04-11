@@ -2,7 +2,7 @@
 
 [![Python 3](https://img.shields.io/badge/python-3-green.svg?style=for-the-badge&logo=python&logoColor=white)](https://docs.python.org/3/)
 [![WShell License](https://img.shields.io/github/license/unlock-security/wshell?style=for-the-badge&label=License)](https://github.com/unlock-security/wshell?tab=GPL-3.0-1-ov-file#readme)
-[![Made by Unlock Security](https://img.shields.io/badge/Made_by-Unlock_Security-blue.svg?style=for-the-badge)](https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell)
+[![Made by 🔓 Unlock Security](https://img.shields.io/badge/Made_by-🔓_Unlock_Security-blue.svg?style=for-the-badge)](https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell)
 
 WShell lets you turn a web-based {code,command,template} injection in a full-featured shell with ease.
 
@@ -112,6 +112,53 @@ Example usage:
     wshell 'https://www.example.com/ssti' 'msg=${self.module.cache.util.os.system("WSHELL")}'
 ```
 
-## License
+## Scripts
 
-Released under [GPL LICENSE](https://github.com/unlock-security/wshell/blob/main/LICENSE) by [🔓 Unlock Security](https://www.unlock-security.it/).
+WShell can run input and output scripts which are simple functions used to manipulate input command and output response.
+As an example, if the vulnerable page returns a base64-encoded result you can use `--output-scripts base64_decode` to get
+the output as plain text.
+
+Scripts can be chained and used more than once, for instance is totally fine to do something like `--output-scripts unescape,base64_decode,base64_decode`.
+
+### Developing a script
+
+Developing a script for WShell is straightforward, just add a python file in `wshell/scripts/input` or `wshell/scripts/output` folder. The file name will
+be the name used to invoke the script from the command line (e.g. if you create `wshell/scripts/output/test.py` you can invoke it with `--output-scripts test`).
+
+Inside the file you have to create a function with the following signature `run(str) -> str`. A docstring to use as a description for the script is mandatory.
+
+As an example, the `base64_decode` output script corresponds to `wshell/scripts/output/base64_decode.py` and it is implemented like this:
+
+```py
+import base64
+
+
+def run(output: str) -> str:
+    """Base64 decode output (requires --os to work)"""
+    return base64.b64decode(output, validate=False).decode("utf-8", "ignore")
+```
+
+## Contributing
+
+We accept contributions of any kind, including bug fixes, feature requests, and new scripts.
+
+If you want to contribute to this project you can just:
+
+1. Fork the repository
+2. Make your changes
+3. Open a Pull Request
+
+When you open a Pull Request, please make sure to follow the next rules:
+
+-   Write a clear and descriptive title
+-   In the description, write a clear and detailed explanation of the changes
+-   If you are fixing a bug, please reference the issue number
+
+---
+
+<p align="center">Made with 💙 by Unlock Security</p>
+<p align="center">
+  <a href="https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell" target="_blank" rel="noopener">
+    <img src="https://www.unlock-security.it/wp-content/uploads/2022/12/logo.svg" width="150">
+  </a>
+</p>

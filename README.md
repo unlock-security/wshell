@@ -88,7 +88,7 @@ HTTP arguments:
   --keep-alive          Use persistent connection (default: True)
   --follow              Follow 30x Location redirects (default: True)
   -ua, --user-agent USER_AGENT
-                        Use a custom User-Agent (default: WShell v0.1.0)
+                        Use a custom User-Agent (default: WShell v0.1.0-beta)
   -r, --random-agent    Use a random valid browser User-Agent
   -j, --json            Data items from the command line are serialized as a JSON object (default: False)
   -f, --form            Data items from the command line are serialized as form fields

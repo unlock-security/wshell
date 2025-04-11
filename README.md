@@ -2,7 +2,7 @@
 
 [![Python 3](https://img.shields.io/badge/python-3-green.svg?style=for-the-badge&logo=python&logoColor=white)](https://docs.python.org/3/)
 [![WShell License](https://img.shields.io/github/license/unlock-security/wshell?style=for-the-badge&label=License)](https://github.com/unlock-security/wshell?tab=GPL-3.0-1-ov-file#readme)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/unlock-security/wshell?style=for-the-badge)](https://github.com/unlock-security/wshell/releases/latest)
+[![GitHub Release](https://img.shields.io/github/v/release/unlock-security/wshell?include_prereleases&sort=semver&display_name=release&style=for-the-badge)](https://github.com/unlock-security/wshell/releases/latest)
 [![Made by 🔓 Unlock Security](https://img.shields.io/badge/Made_by-🔓_Unlock_Security-blue.svg?style=for-the-badge)](https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell)
 
 WShell lets you turn a web-based {code,command,template} injection in a full-featured shell with ease.

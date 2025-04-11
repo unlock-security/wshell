@@ -2,6 +2,8 @@ import importlib
 import pkgutil
 from typing import Callable, Dict
 
+from wshell.log import logger
+
 
 def load_scripts(package: str, path: str) -> Dict[str, Callable[[str], str]]:
     """
@@ -28,5 +30,8 @@ def load_scripts(package: str, path: str) -> Dict[str, Callable[[str], str]]:
                 and all(arg_type is str for arg_type in func.__annotations__.values()) \
                 and func.__doc__ is not None and func.__doc__.strip() != "":
                     scripts[module_info.name] = func
+                    continue
+
+        logger.warning(f"'{package}.{module_info.name}' is not valid a script. Skipping...")
 
     return scripts

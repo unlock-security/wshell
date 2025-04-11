@@ -1,0 +1,11 @@
+version: 2
+update-config:
+    - package-manager: "pip"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+      ignore:
+          - dependency-name: "*"
+            update-types: ["version-update:semver-patch"]
+      target-branch: "dev"
+      versioning-strategy: "increase"

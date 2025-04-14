@@ -33,7 +33,7 @@ setup(
         ("", ["LICENSE"]),
         ("data", ["data/user-agents.txt"]),
     ],
-    python_requires="==3.13.2",
+    python_requires=">=3.12",
     install_requires=[
         "cmd2==2.5.11",
         "requests==2.32.3",

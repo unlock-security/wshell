@@ -63,6 +63,26 @@ def positive_float(value: str) -> float:
 
     return value
 
+def timeout(value: str) -> float:
+    """ Ensure the provided value is a valid timeout value (non negative float number)
+    :param value: The value to validate
+    :raise argparse.ArgumentTypeError if value is not float or is < 0
+    :return None if value is 0 or value if it is valid
+    """
+    try:
+        value = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Value must be numeric")
+
+    # Allow 0 to mean no timeout
+    if value == 0:
+        return None
+
+    if value < 0:
+        raise argparse.ArgumentTypeError("Value must be positive or zero")
+
+    return value
+
 def _scripts_chain(scripts_chain: str, valid_scripts: Dict[str, Callable[[str], str]]) -> List[Callable[[str], str]]:
     """ Validate a scripts chain
     :param scripts_chain: The comma-separated scripts chain to validate

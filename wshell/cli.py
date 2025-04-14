@@ -3,6 +3,7 @@ from binascii import Error as BinasciiError
 
 import cmd2
 
+from wshell import validators
 from wshell.injectors import CommandInjector
 
 
@@ -39,6 +40,11 @@ class WShellCmd(cmd2.Cmd):
         interesting_settings = [ "debug", "timing" ]
         for setting in set(self.settables) - set(interesting_settings):
             self.remove_settable(setting)
+
+        # Add wshell-specific settings
+        self.add_settable(
+            cmd2.Settable("timeout", validators.timeout, "Connection timeout in seconds (0 to disable)", injector)
+        )
 
         self.injector = injector
         self.prompt = self.injector.get_prompt()

@@ -85,6 +85,7 @@ HTTP arguments:
   -m, --method METHOD   The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)
   -t, --timeout SECONDS
                         The connection timeout of the request in seconds (default: 3.0)
+  --no-timeout          Disable the connection timeout
   --keep-alive          Use persistent connection (default: True)
   --follow              Follow 30x Location redirects (default: True)
   -ua, --user-agent USER_AGENT

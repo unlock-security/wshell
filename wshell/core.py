@@ -75,12 +75,20 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         "-m", "--method",
         help="The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)"
     )
-    http_group.add_argument(
+    timeout_http_group = http_group.add_mutually_exclusive_group(required=False)
+    timeout_http_group.add_argument(
         "-t", "--timeout",
         metavar="SECONDS",
         type=validators.positive_float,
         default=settings.DEFAULT_TIMEOUT,
-        help='The connection timeout of the request in seconds (default: %(default)s)'
+        help="The connection timeout of the request in seconds (default: %(default)s)"
+    )
+    timeout_http_group.add_argument(
+        "--no-timeout",
+        action="store_const",
+        dest="timeout",
+        const=None,
+        help="Disable the connection timeout"
     )
     persistent_connection_http_group = http_group.add_mutually_exclusive_group(required=False)
     persistent_connection_http_group.add_argument(

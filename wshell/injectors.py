@@ -89,7 +89,7 @@ class CommandInjector:
         logger.debug(f"Using placeholder: {placeholder}")
 
         # Remove any comment to avoid problems with placeholders in the resulting final command
-        cmd = self._remove_comments(cmd)
+        cmd = self._remove_commented_out(cmd)
 
         # To make `cd` command works over HTTP shell we need to change to the desired directory
         # before the execution of every command
@@ -150,7 +150,7 @@ class CommandInjector:
         command_output = match.group("command_output")
         return command_output if not strip else command_output.strip()
 
-    def _remove_comments(self, cmd: str) -> str:
+    def _remove_commented_out(self, cmd: str) -> str:
         """ Remove any commented out part of the command """
         return re.sub(r"#.*$", "", cmd, flags=re.MULTILINE)
 
@@ -253,7 +253,7 @@ class WindowsCmdCommandInjector(CommandInjector):
     PATH_DELIMITER = "\\"
     CURRENT_DIRECTORY_COMMAND = "cd"
 
-    def _remove_comments(self, cmd: str) -> str:
+    def _remove_commented_out(self, cmd: str) -> str:
         # Matches:
         #   REM <comment>
         #   @REM <comment>

@@ -4,6 +4,7 @@ from binascii import Error as BinasciiError
 import cmd2
 
 from wshell import validators
+from wshell.commands import load_command_sets
 from wshell.injectors import CommandInjector
 
 
@@ -56,6 +57,9 @@ class WShellCmd(cmd2.Cmd):
         # Hide alias and overridden commands from help menu
         self.hidden_commands.extend(["cd", "exit", "logout"])
 
+        # Import all modular commands from the commands package
+        for CommandClass in load_command_sets():
+            self.register_command_set(CommandClass())
         # Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD)
         # to get file content as base64 to avoid some issues when manipulating
         # the output (eg. escape \n)

@@ -2,7 +2,7 @@ import hashlib
 import random
 import re
 from enum import StrEnum
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, override
 from urllib.parse import quote as url_encode
 
 import requests
@@ -226,6 +226,7 @@ class LinuxCommandInjector(CommandInjector):
     OS = OSEnum.LINUX
     CURRENT_DIRECTORY_COMMAND = "pwd"
 
+    @override
     def get_prompt(self):
         # Outputs like "www-data@target:/var/www/html$ "
         user = self.execute('whoami', strip=True)
@@ -233,6 +234,7 @@ class LinuxCommandInjector(CommandInjector):
         pwd  = self.execute('pwd', strip=True)
         return f"{user}@{host}:{pwd}{'$' if user != 'root' else '#'} "
 
+    @override
     def change_directory(self, directory: str) -> str:
         # Make `cd` with no arguments works
         if not directory.strip():
@@ -247,6 +249,7 @@ class WindowsCmdCommandInjector(CommandInjector):
     PATH_DELIMITER = "\\"
     CURRENT_DIRECTORY_COMMAND = "cd"
 
+    @override
     def _remove_commented_out(self, cmd: str) -> str:
         # Matches:
         #   REM <comment>
@@ -255,6 +258,7 @@ class WindowsCmdCommandInjector(CommandInjector):
         #   command& REM <comment>
         return re.sub(r"(&\s*)?(@?REM|::).*$", "", cmd, flags=re.MULTILINE|re.IGNORECASE)
 
+    @override
     def get_prompt(self):
         # Outputs like "C:\Users\wshell>"
         return f"{self.current_directory()}> "
@@ -276,6 +280,7 @@ class WindowsPshCommandInjector(CommandInjector):
     #
     CURRENT_DIRECTORY_COMMAND = "'' + (Get-Location)"
 
+    @override
     def get_prompt(self):
         # Outputs like "PS C:\Users\wshell>"
         return f"PS {self.current_directory()}> "

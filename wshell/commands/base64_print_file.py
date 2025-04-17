@@ -6,7 +6,7 @@ from cmd2 import Cmd, CommandSet
 from wshell import utils
 
 
-class Base64PrintFile(CommandSet):
+class Base64PrintFileCommandSet(CommandSet):
     """
     Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD) to get file content
     as base64 to avoid some issues when manipulating the output (eg. escape \n)

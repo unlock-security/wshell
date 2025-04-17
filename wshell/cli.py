@@ -1,5 +1,3 @@
-from base64 import b64decode
-from binascii import Error as BinasciiError
 
 import cmd2
 
@@ -60,15 +58,6 @@ class WShellCmd(cmd2.Cmd):
         # Import all modular commands from the commands package
         for CommandClass in load_command_sets():
             self.register_command_set(CommandClass())
-        # Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD)
-        # to get file content as base64 to avoid some issues when manipulating
-        # the output (eg. escape \n)
-        if self.injector.is_windows_cmd():
-            self.do_type = self.base64_cat
-            self.hidden_commands.append("type")
-        else:
-            self.do_cat = self.base64_cat
-            self.hidden_commands.append("cat")
 
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """
@@ -84,16 +73,3 @@ class WShellCmd(cmd2.Cmd):
         actual_directory = self.injector.change_directory(line)
         self.poutput(actual_directory)
         self.prompt = self.injector.get_prompt()
-
-    def base64_cat(self, line):
-        """ Print file content using base64 intermediate step """
-        base64_output = self.injector.base64_cat(line)
-
-        # If the output is a valid base64 we got file content, if not we encountered an error
-        # (eg. no permission on the file, file not exists, etc.). In this cases we just print
-        # the error message to the user.
-        try:
-            # Merge all the lines in one to avoid base64 validation errors
-            self.poutput(b64decode("".join(base64_output.splitlines()), validate=True).decode(encoding='utf-8', errors='replace'))
-        except BinasciiError:
-            self.poutput(base64_output)

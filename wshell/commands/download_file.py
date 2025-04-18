@@ -95,8 +95,6 @@ class DownloadFileCommandSet(CommandSet):
                         base64_encoded_chunk = self.get_base64_encoded_chunk(args.remote_filename, chunk_index, args.chunk_size)
                         local_file.write(b64decode(base64_encoded_chunk))
                     
-                    # TODO: verify file integrity
-                    
             logger.info(f"File '{args.remote_filename}' downloaded to '{args.local_filename}'")
         except binascii.Error:
             logger.error("Error reading retrieved file content")

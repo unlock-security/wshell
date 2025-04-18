@@ -62,12 +62,10 @@ class DownloadFileCommandSet(CommandSet):
         super().on_register(cmd)
 
         if self._cmd.injector.is_linux():
-            self.remote_file_exists = self.linux_remote_file_exists
             self.remote_file_size = self.linux_remote_file_size
             self.get_base64_encoded_file_content = self.linux_get_base64_encoded_file_content
             self.get_base64_encoded_chunk = self.linux_get_base64_encoded_chunk
         elif self._cmd.injector.is_windows_psh():
-            self.remote_file_exists = self.windows_psh_remote_file_exists
             self.remote_file_size = self.windows_psh_remote_file_size
             self.get_base64_encoded_file_content = self.windows_psh_get_base64_encoded_file_content
             self.get_base64_encoded_chunk = self.windows_psh_get_base64_encoded_chunk
@@ -76,10 +74,6 @@ class DownloadFileCommandSet(CommandSet):
     def do_download(self, args) -> None:
         if args.local_filename is None:
             args.local_filename = args.remote_filename.replace(self._cmd.injector.PATH_DELIMITER, "_")
-
-        if not self.remote_file_exists(args.remote_filename):
-            logger.error(f"Remote file '{args.remote_filename}' does not exist or is not readable")
-            return
 
         try:
             with open(args.local_filename, "wb") as local_file:
@@ -117,10 +111,6 @@ class DownloadFileCommandSet(CommandSet):
     def linux_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
         return self._cmd.injector.execute(f"dd bs={chunk_size} count=1 skip={chunk_index} if={filename} status=none | base64 -w0")
 
-    def linux_remote_file_exists(self, filename: str) -> bool:
-        result = self._cmd.injector.execute(f"test -r '{filename}'; echo $?")
-        return result == "0"
-
     def linux_remote_file_size(self, filename: str) -> int:
         return int(self._cmd.injector.execute(f"stat -c %s '{filename}'"))
 
@@ -141,11 +131,6 @@ class DownloadFileCommandSet(CommandSet):
             $fs.Close(); \
             [Convert]::ToBase64String($buf)"
         )
-
-    def windows_psh_remote_file_exists(self, filename: str) -> bool:
-        return self._cmd.injector.execute(
-            f"try {{ [IO.File]::OpenRead('{filename}').Close(); 0 }} catch {{ 1 }}"
-        ) == "0"
 
     def windows_psh_remote_file_size(self, filename: str) -> int:
         return self._cmd.injector.execute(f"(Get-Item -Path '{filename}').Length")

@@ -81,7 +81,7 @@ class DownloadFileCommandSet(CommandSet):
             with open(args.local_filename, "wb") as local_file:
                 if not args.use_chunks:
                     base64_encoded_file_content = self.get_base64_encoded_file_content(args.remote_filename)
-                    local_file.write(b64decode(base64_encoded_file_content, validate=True))
+                    local_file.write(b64decode(base64_encoded_file_content))
                 else:
                     file_size = self.remote_file_size(args.remote_filename)
                     total_chunks = math.ceil(file_size / args.chunk_size)
@@ -90,7 +90,7 @@ class DownloadFileCommandSet(CommandSet):
                     for chunk_index in range(total_chunks):
                         self._cmd.poutput(f"Downloading chunk {chunk_index + 1}/{total_chunks}", end="\r")
                         base64_encoded_chunk = self.get_base64_encoded_chunk(args.remote_filename, chunk_index, args.chunk_size)
-                        local_file.write(b64decode(base64_encoded_chunk, validate=True))
+                        local_file.write(b64decode(base64_encoded_chunk))
                     
                     # TODO: verify file integrity
                     

@@ -1,6 +1,7 @@
 import hashlib
 import random
 import re
+import time
 from enum import StrEnum
 from typing import Callable, Dict, List, Optional, override
 from urllib.parse import quote as url_encode
@@ -41,6 +42,7 @@ class CommandInjector:
             method: str,
             url: str,
             timeout: Optional[float] = settings.DEFAULT_TIMEOUT,
+            delay: Optional[float] = settings.DEFAULT_DELAY,
             post_data: Optional[Dict[str, str]] = None,
             headers: Optional[Dict[str, str]] = None,
             command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
@@ -50,6 +52,7 @@ class CommandInjector:
         self.http = requests.Session() if reuse_connection else requests
         self.allow_redirects = allow_redirects
         self.timeout = timeout
+        self.delay = delay
         self.use_json_post_data = use_json_post_data
         self.url = url
         self.headers = headers
@@ -115,6 +118,9 @@ class CommandInjector:
             post_data[key] = value.replace(self.command_placeholder, cmd)
 
         post_data = dict(json=post_data) if self.use_json_post_data else dict(data=post_data)
+
+        # Slow down the requests in case it is necessary to not being blocked
+        time.sleep(self.delay)
 
         try:
             response = self.http.request(

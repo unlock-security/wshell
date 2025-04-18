@@ -90,6 +90,12 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         const=None,
         help="Disable the connection timeout"
     )
+    http_group.add_argument(
+        "-d", "--delay",
+        type=validators.positive_float,
+        default=settings.DEFAULT_DELAY,
+        help="Delay in seconds between each HTTP request (default: %(default)s)"
+    )
     persistent_connection_http_group = http_group.add_mutually_exclusive_group(required=False)
     persistent_connection_http_group.add_argument(
         "--keep-alive",
@@ -275,6 +281,7 @@ def program(args: argparse.Namespace) -> ExitStatus:
             os=args.os,
             allow_redirects=args.allow_redirects,
             timeout=args.timeout,
+            delay=args.delay,
             reuse_connection=args.reuse_connection,
             use_json_post_data=args.use_json_post_data,
             method=args.method,

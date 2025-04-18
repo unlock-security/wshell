@@ -65,8 +65,11 @@ class DownloadFileCommandSet(CommandSet):
             self.remote_file_size = self.linux_remote_file_size
             self.get_base64_encoded_file_content = self.linux_get_base64_encoded_file_content
             self.get_base64_encoded_chunk = self.linux_get_base64_encoded_chunk
-        else:
-            raise NotImplementedError
+        elif self._cmd.injector.is_windows_psh():
+            self.remote_file_exists = self.windows_psh_remote_file_exists
+            self.remote_file_size = self.windows_psh_remote_file_size
+            self.get_base64_encoded_file_content = self.windows_psh_get_base64_encoded_file_content
+            self.get_base64_encoded_chunk = self.windows_psh_get_base64_encoded_chunk
     
     @with_argparser(argument_parser)
     def do_download(self, args) -> None:
@@ -116,3 +119,29 @@ class DownloadFileCommandSet(CommandSet):
 
     def linux_remote_file_size(self, filename: str) -> int:
         return int(self._cmd.injector.execute(f"stat -c %s '{filename}'"))
+
+
+    #
+    # Windows PSH implementation
+    #
+
+    def windows_psh_get_base64_encoded_file_content(self, filename: str) -> str:
+        return self.execute(f"[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content '{filename}')))")
+
+    def windows_psh_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
+        return self.execute(
+            f"$fs = [IO.File]::OpenRead('{filename}'); \
+            $fs.Seek({chunk_index}*{chunk_size}, 'Begin') | Out-Null; \
+            $buf = New-Object Byte[] {chunk_size}; \
+            $fs.Read($buf,0,$buf.Length) | Out-Null; \
+            $fs.Close(); \
+            [Convert]::ToBase64String($buf)"
+        )
+
+    def windows_psh_remote_file_exists(self, filename: str) -> bool:
+        return self._cmd.injector.execute(
+            f"try {{ [IO.File]::OpenRead('{filename}').Close(); 0 }} catch {{ 1 }}"
+        ) == "0"
+
+    def windows_psh_remote_file_size(self, filename: str) -> int:
+        return self._cmd.injector.execute(f"(Get-Item -Path '{filename}').Length")

@@ -51,26 +51,15 @@ class Base64PrintFileCommandSet(CommandSet):
         raise NotImplementedError
 
     def linux_get_base64_encoded_file(self, filename: str) -> str:
-        return self._cmd.injector.execute(f"base64 \"{filename}\" 2>&1")
+        return self._cmd.injector.execute(f"base64 '{filename}' 2>&1")
 
     def windows_psh_get_base64_encoded_file(self, filename: str) -> str:
-        return self.execute(
-            f"$file_content = Get-Content '{filename}'; [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($file_content))"
-        )
+        return self.execute(f"[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content '{filename}')))")
 
     def windows_cmd_get_base64_encoded_file(self, filename: str) -> str:
-        random_filename = utils.random_string()
-        self.execute(f"certutil -encode '{filename}' %TEMP%/{random_filename}")
-        base64_output = self.execute(f"type %TEMP%/{random_filename}")
-        self.execute(f"del %TEMP%/{random_filename}")
-
-        # `certutil` output will be something like:
-        #
-        # -----BEGIN CERTIFICATE-----
-        # V1NoZWxsIGxldHMgeW91IHR1cm4gYSB3ZWItYmFzZWQge2NvZGUsY29tbWFuZCx0ZW1wbGF0ZX0g
-        # aW5qZWN0aW9uIGluIGEgZnVsbCBmZWF0dXJlZCBzaGVsbCB3aXRoIGVhc2UuCg==
-        # -----END CERTIFICATE-----
-        #
-        # So, we need to remove the first and the last lines
-        #
-        return base64_output[1:-2]
+        temp_filename = f"%TEMP%/{utils.random_string()}"
+        return self.execute(
+            f"certutil -encodehex -f '{filename}' {temp_filename} 0x40000001>nul&& \
+            type {temp_filename} && \
+            del {temp_filename}"
+        )

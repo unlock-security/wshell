@@ -7,6 +7,7 @@ from typing import override
 from cmd2 import CommandSet, with_argparser, with_default_category
 
 from wshell import utils, validators
+from wshell.errors import UnsupportedFeatureError
 from wshell.log import logger
 
 
@@ -86,6 +87,9 @@ class DownloadFileCommandSet(CommandSet):
                     base64_encoded_file_content = self.get_base64_encoded_file_content(args.remote_filename)
                     local_file.write(b64decode(base64_encoded_file_content))
                 else:
+                    if self._cmd.injector.is_windows_cmd():
+                        raise UnsupportedFeatureError("Chunked download is not supported on Windows Command Prompt (use -n or --no-chunk instead)")
+
                     file_size = self.remote_file_size(args.remote_filename)
                     total_chunks = math.ceil(file_size / args.chunk_size)
                     logger.info(f"Downloading {file_size} bytes as {total_chunks} chunks ({args.chunk_size} bytes each)")

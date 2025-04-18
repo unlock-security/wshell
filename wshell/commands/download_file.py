@@ -100,16 +100,19 @@ class DownloadFileCommandSet(CommandSet):
         except OSError as error:
             logger.error(f"Error opening local file '{args.local_filename}': {error.strerror}")
 
+    #
+    # Linux implementation
+    #
+
     def linux_get_base64_encoded_file_content(self, filename: str) -> str:
-        return self._cmd.injector.execute(f"base64 -w0 \"{filename}\"")
+        return self._cmd.injector.execute(f"base64 -w0 '{filename}' 2>&1")
 
     def linux_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
-        return self._cmd.injector.execute(f"dd bs={chunk_size} count=1 skip={chunk_index} if={filename} | base64 -w0")
+        return self._cmd.injector.execute(f"dd bs={chunk_size} count=1 skip={chunk_index} if={filename} status=none | base64 -w0")
 
     def linux_remote_file_exists(self, filename: str) -> bool:
-        result = self._cmd.injector.execute(f"test -r \"{filename}\"; echo $?")
+        result = self._cmd.injector.execute(f"test -r '{filename}'; echo $?")
         return result == "0"
 
     def linux_remote_file_size(self, filename: str) -> int:
-        result = self._cmd.injector.execute(f"stat -c %s \"{filename}\"")
-        return int(result)
+        return int(self._cmd.injector.execute(f"stat -c %s '{filename}'"))

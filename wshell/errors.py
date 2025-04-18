@@ -32,3 +32,7 @@ class TargetUnreachableError(HttpError):
 class TimeoutExpiredError(HttpError):
     """ The timeout for connect/read/write is expired """
     EXIT_STATUS = ExitStatus.ERROR_TIMEOUT_EXPIRED
+
+class UnsupportedFeatureError(WShellError):
+    """ The feature is not supported for the current OS """
+    EXIT_STATUS = ExitStatus.ERROR_UNSUPPORTED_FEATURE

@@ -46,6 +46,21 @@ def not_empty(value: str) -> str:
 
     return value
 
+def positive_integer(value: str) -> int:
+    """ Ensure the provided value is a positive integer number
+    :param value: The value to validate
+    :raise argparse.ArgumentTypeError if value is not integer or is <= 0
+    :return value if it is valid
+    """
+    try:
+        value = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("Value must be numeric")
+
+    if value <= 0:
+        raise argparse.ArgumentTypeError("Value must be greater than zero")
+
+    return value
 
 def positive_float(value: str) -> float:
     """ Ensure the provided value is a positive float number

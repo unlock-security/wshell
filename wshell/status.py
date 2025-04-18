@@ -17,5 +17,8 @@ class ExitStatus(IntEnum):
     ERROR_TARGET_UNREACHABLE = 20
     ERROR_TIMEOUT_EXPIRED = 21
 
+    # Command Sets
+    ERROR_UNSUPPORTED_FEATURE = 30
+
     # Signals
     ERROR_CTRL_C = 130

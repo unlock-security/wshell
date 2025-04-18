@@ -6,7 +6,7 @@ from typing import override
 
 from cmd2 import CommandSet, with_argparser, with_default_category
 
-from wshell import validators
+from wshell import utils, validators
 from wshell.log import logger
 
 

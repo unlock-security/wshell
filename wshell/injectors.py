@@ -235,10 +235,14 @@ class LinuxCommandInjector(CommandInjector):
     @override
     def get_prompt(self):
         # Outputs like "www-data@target:/var/www/html$ "
-        user = self.execute('whoami', strip=True)
+        # in case of user with no username it will use the user ID
+        id = self.execute('id', strip=True)
+        user_name_or_id = re.match(r"^uid=(?P<user_id>\d+)(\((?P<username>.*)\))? ", id)
+        user = user_name_or_id.group("username") or user_name_or_id.group("user_id") or "unknown"
+
         host = self.execute('hostname', strip=True)
         pwd  = self.execute('pwd', strip=True)
-        return f"{user}@{host}:{pwd}{'$' if user != 'root' else '#'} "
+        return f"{user}@{host}:{pwd}{'$' if user not in ('root', '0') else '#'} "
 
     @override
     def change_directory(self, directory: str) -> str:

@@ -142,21 +142,10 @@ def run(output: str) -> str:
 
 ## Contributing
 
-We accept contributions of any kind, including bug fixes, feature requests, and new scripts.
+Have a look through existing [Issues](https://github.com/unlock-security/wshell/issues) and [Pull Requests](https://github.com/unlock-security/wshell/pulls) that you could help with.
+If you'd like to request a feature or report a bug, please [create a GitHub Issue]() using one of the templates provided.
 
-If you want to contribute to this project you can just:
-
-1. Fork the repository
-2. Start a new branch starting from `dev`
-3. Make your changes
-4. Open a Pull Request
-
-When you open a Pull Request, please make sure to follow the next rules:
-
--   Write a clear and descriptive title
--   In the description, write a clear and detailed explanation of the changes
--   There are no conflicts in merging your branch on `dev`
--   If you are fixing a bug, please reference the issue number
+[See contribution guide →](https://github.com/unlock-security/wshell/blob/main/CONTRIBUTING.md)
 
 ---
 

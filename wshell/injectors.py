@@ -190,6 +190,10 @@ class CommandInjector:
             else:
                 raise OsDetectionError(f"Unrecognized output: {repr(cmd_output)}")
 
+        if not self.OS:
+            logger.error("Unable to detect target OS automatically. Please, specify it manually.")
+            raise OsDetectionError("Unable to detect target OS")
+
         return self.OS
 
     def is_linux(self) -> bool:
@@ -307,7 +311,7 @@ def get_command_injector(os: Optional[OSEnum] = None, *args, **kwargs) -> Comman
         OSEnum.WIN_CMD: WindowsCmdCommandInjector,
         OSEnum.WIN_PSH: WindowsPshCommandInjector
     }
-    if os in os_injector_map:
+    if os and os in os_injector_map:
         return os_injector_map[os](*args, **kwargs)
     else:
         raise OsDetectionError(f"Unknown OS: {os}")

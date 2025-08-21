@@ -29,7 +29,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
     :return exit status code.
     """
     # remove program name from args to not be confused as positional argument
-    program_name, *args = args
+    _, *args = args
 
     parser = argparse.ArgumentParser(
         prog="wshell",

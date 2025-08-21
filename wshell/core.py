@@ -4,7 +4,7 @@ import random
 import re
 import sys
 import textwrap
-from typing import List, Union
+from typing import List
 from urllib.parse import urlparse
 
 import platformdirs
@@ -22,7 +22,7 @@ from wshell.status import ExitStatus
 
 
 # noinspection PyDefaultArgument
-def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
+def main(args: List[str] = sys.argv) -> ExitStatus:
     """
     Process arguments and run the main workflow.
     :param args list of command line arguments to parse

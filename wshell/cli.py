@@ -20,7 +20,7 @@ class WShellCmd(cmd2.Cmd):
     def __init__(
             self,
             injector: CommandInjector,
-            persistent_history_file=None
+            persistent_history_file: str=''
     ):
         super().__init__(
             allow_cli_args=False,     # To avoid using URL and HTTP parameters from the command line as commands

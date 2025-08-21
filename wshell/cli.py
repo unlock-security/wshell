@@ -67,6 +67,7 @@ class WShellCmd(cmd2.Cmd):
 
     def emptyline(self) -> bool:
         """ Do nothing on empty command """
+        return True
 
     def do_cd(self, line: str):
         """ Change directory command implementation """

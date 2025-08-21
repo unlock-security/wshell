@@ -18,7 +18,7 @@ def http_url(value: str) -> str:
     :raise argparse.ArgumentTypeError if the value is not an URL or URL scheme is not HTTP nor HTTPS
     :return value if it is valid
     """
-    url = requests.utils.prepend_scheme_if_needed(url=value, new_scheme="http")
+    url: str = requests.utils.prepend_scheme_if_needed(url=value, new_scheme="http")
     try:
         validators.url(
             url,

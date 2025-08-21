@@ -260,7 +260,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         parsed_args.os = OSEnum(parsed_args.os)
 
     # Extract host domain to persist history on specific file
-    host = urlparse(parsed_args.url).hostname
+    host: str = urlparse(parsed_args.url).hostname
     history_file = os.path.join(
         platformdirs.user_data_dir(parser.prog),
         "history",

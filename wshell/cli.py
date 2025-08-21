@@ -68,7 +68,7 @@ class WShellCmd(cmd2.Cmd):
     def emptyline(self) -> bool:
         """ Do nothing on empty command """
 
-    def do_cd(self, line):
+    def do_cd(self, line: str):
         """ Change directory command implementation """
         actual_directory = self.injector.change_directory(line)
         self.poutput(actual_directory)

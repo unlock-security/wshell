@@ -109,7 +109,7 @@ class CommandInjector:
         # (GET parameters, POST data and request headers)
         url = self.url.replace(self.command_placeholder, url_encode(cmd))
 
-        headers = dict()
+        headers: Dict[str, str] = dict()
         for key, value in self.headers.items():
             headers[key] = value.replace(self.command_placeholder, cmd)
 
@@ -222,7 +222,7 @@ class CommandInjector:
         """ Return the current working directory """
         return self.change_directory(".")
 
-    def get_prompt(self):
+    def get_prompt(self) -> str:
         """ Get the specific prompt string for the target OS """
         raise NotImplementedError
 
@@ -296,13 +296,13 @@ class WindowsPshCommandInjector(CommandInjector):
         return f"PS {self.current_directory()}> "
 
 
-def get_command_injector(os: OSEnum = None, *args, **kwargs):
+def get_command_injector(os: Optional[OSEnum] = None, *args, **kwargs) -> CommandInjector:
     """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """
     if os is None:
         injector = CommandInjector(*args, **kwargs)
         os = injector.OS
 
-    os_injector_map = {
+    os_injector_map: Dict[OSEnum, Type[CommandInjector]] = {
         OSEnum.LINUX: LinuxCommandInjector,
         OSEnum.WIN_CMD: WindowsCmdCommandInjector,
         OSEnum.WIN_PSH: WindowsPshCommandInjector

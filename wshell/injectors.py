@@ -3,7 +3,7 @@ import random
 import re
 import time
 from enum import StrEnum
-from typing import Callable, Dict, List, Optional, override
+from typing import Callable, Dict, List, Optional, Type, override
 from urllib.parse import quote as url_encode
 
 import requests
@@ -42,12 +42,12 @@ class CommandInjector:
             method: str,
             url: str,
             timeout: Optional[float] = settings.DEFAULT_TIMEOUT,
-            delay: Optional[float] = settings.DEFAULT_DELAY,
-            post_data: Optional[Dict[str, str]] = None,
-            headers: Optional[Dict[str, str]] = None,
+            delay: float = settings.DEFAULT_DELAY,
+            post_data: Dict[str, str] = dict(),
+            headers: Dict[str, str] = dict(),
             command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
-            input_scripts: Optional[List[Callable[[str], str]]] = [],
-            output_scripts: Optional[List[Callable[[str], str]]] = []
+            input_scripts: List[Callable[[str], str]] = [],
+            output_scripts: List[Callable[[str], str]] = []
     ):
         self.http = requests.Session() if reuse_connection else requests
         self.allow_redirects = allow_redirects

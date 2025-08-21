@@ -248,7 +248,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         parser.error(f"Unrecognized argument: {request_item}")
 
     # Replace raw request items with parsed ones
-    del parsed_args.request_items
+    delattr(parsed_args, "request_items")
     parsed_args.post_data = post_data
     parsed_args.headers = headers
 

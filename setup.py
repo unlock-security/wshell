@@ -39,7 +39,7 @@ setup(
         "requests==2.32.3",
         "validator-collection==1.5.0",
         "colorlog==6.9.0",
-        "platformdirs==4.3.7"
+        "platformdirs==4.4.0"
     ],
     platforms=["posix"],
     classifiers=[

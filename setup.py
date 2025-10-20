@@ -38,7 +38,7 @@ setup(
         "cmd2==2.6.1",
         "requests==2.32.3",
         "validator-collection==1.5.0",
-        "colorlog==6.9.0",
+        "colorlog==6.10.1",
         "platformdirs==4.3.7"
     ],
     platforms=["posix"],

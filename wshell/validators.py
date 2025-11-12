@@ -1,7 +1,7 @@
 """ A collection of validators to use in argument parsing """
 
 import argparse
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 from urllib.parse import urlparse
 
 import requests.utils
@@ -18,7 +18,7 @@ def http_url(value: str) -> str:
     :raise argparse.ArgumentTypeError if the value is not an URL or URL scheme is not HTTP nor HTTPS
     :return value if it is valid
     """
-    url = requests.utils.prepend_scheme_if_needed(url=value, new_scheme="http")
+    url: str = requests.utils.prepend_scheme_if_needed(url=value, new_scheme="http")
     try:
         validators.url(
             url,
@@ -47,56 +47,56 @@ def not_empty(value: str) -> str:
     return value
 
 def positive_integer(value: str) -> int:
-    """ Ensure the provided value is a positive integer number
+    """ Ensure the provided value is a valid string representation of a positive integer number
     :param value: The value to validate
     :raise argparse.ArgumentTypeError if value is not integer or is <= 0
     :return value if it is valid
     """
     try:
-        value = int(value)
+        int_value = int(value)
     except ValueError:
         raise argparse.ArgumentTypeError("Value must be numeric")
 
-    if value <= 0:
+    if int_value <= 0:
         raise argparse.ArgumentTypeError("Value must be greater than zero")
 
-    return value
+    return int_value
 
 def positive_float(value: str) -> float:
-    """ Ensure the provided value is a positive float number
+    """ Ensure the provided value is a valid string representation of a positive float number
     :param value: The value to validate
     :raise argparse.ArgumentTypeError if value is not float or is <= 0
     :return value if it is valid
     """
     try:
-        value = float(value)
+        float_value = float(value)
     except ValueError:
         raise argparse.ArgumentTypeError("Value must be numeric")
 
-    if value <= 0:
+    if float_value <= 0:
         raise argparse.ArgumentTypeError("Value must be greater than zero")
 
-    return value
+    return float_value
 
-def timeout(value: str) -> float:
+def timeout(value: str) -> Optional[float]:
     """ Ensure the provided value is a valid timeout value (non negative float number)
     :param value: The value to validate
     :raise argparse.ArgumentTypeError if value is not float or is < 0
     :return None if value is 0 or value if it is valid
     """
     try:
-        value = float(value)
+        float_value = float(value)
     except ValueError:
         raise argparse.ArgumentTypeError("Value must be numeric")
 
     # Allow 0 to mean no timeout
-    if value == 0:
+    if float_value == 0:
         return None
 
-    if value < 0:
+    if float_value < 0:
         raise argparse.ArgumentTypeError("Value must be positive or zero")
 
-    return value
+    return float_value
 
 def _scripts_chain(scripts_chain: str, valid_scripts: Dict[str, Callable[[str], str]]) -> List[Callable[[str], str]]:
     """ Validate a scripts chain
@@ -105,12 +105,12 @@ def _scripts_chain(scripts_chain: str, valid_scripts: Dict[str, Callable[[str], 
     :raise argparse.ArgumentTypeError if the scripts chain is not valid
     :return A list of callable scripts based on scripts_chain
     """
-    scripts_chain = scripts_chain.split(",")
-    invalid_scripts = set(scripts_chain) - set(valid_scripts.keys())
+    scripts_chain_list = scripts_chain.split(",")
+    invalid_scripts = set(scripts_chain_list) - set(valid_scripts.keys())
     if invalid_scripts:
         raise argparse.ArgumentTypeError(f"Invalid scripts: {', '.join(invalid_scripts)}")
 
-    return [valid_scripts[script] for script in scripts_chain]
+    return [valid_scripts[script] for script in scripts_chain_list]
 
 def input_scripts_chain(scripts_chain: str) -> List[Callable[[str], str]]:
     """ Validate an input scripts chain

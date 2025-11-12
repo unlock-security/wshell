@@ -3,7 +3,7 @@ import random
 import re
 import time
 from enum import StrEnum
-from typing import Callable, Dict, List, Optional, override
+from typing import Callable, Dict, List, Optional, Type, override
 from urllib.parse import quote as url_encode
 
 import requests
@@ -42,12 +42,12 @@ class CommandInjector:
             method: str,
             url: str,
             timeout: Optional[float] = settings.DEFAULT_TIMEOUT,
-            delay: Optional[float] = settings.DEFAULT_DELAY,
-            post_data: Optional[Dict[str, str]] = None,
-            headers: Optional[Dict[str, str]] = None,
+            delay: float = settings.DEFAULT_DELAY,
+            post_data: Dict[str, str] = dict(),
+            headers: Dict[str, str] = dict(),
             command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
-            input_scripts: Optional[List[Callable[[str], str]]] = [],
-            output_scripts: Optional[List[Callable[[str], str]]] = []
+            input_scripts: List[Callable[[str], str]] = [],
+            output_scripts: List[Callable[[str], str]] = []
     ):
         self.http = requests.Session() if reuse_connection else requests
         self.allow_redirects = allow_redirects
@@ -109,7 +109,7 @@ class CommandInjector:
         # (GET parameters, POST data and request headers)
         url = self.url.replace(self.command_placeholder, url_encode(cmd))
 
-        headers = dict()
+        headers: Dict[str, str] = dict()
         for key, value in self.headers.items():
             headers[key] = value.replace(self.command_placeholder, cmd)
 
@@ -190,6 +190,10 @@ class CommandInjector:
             else:
                 raise OsDetectionError(f"Unrecognized output: {repr(cmd_output)}")
 
+        if not self.OS:
+            logger.error("Unable to detect target OS automatically. Please, specify it manually.")
+            raise OsDetectionError("Unable to detect target OS")
+
         return self.OS
 
     def is_linux(self) -> bool:
@@ -222,7 +226,7 @@ class CommandInjector:
         """ Return the current working directory """
         return self.change_directory(".")
 
-    def get_prompt(self):
+    def get_prompt(self) -> str:
         """ Get the specific prompt string for the target OS """
         raise NotImplementedError
 
@@ -238,7 +242,8 @@ class LinuxCommandInjector(CommandInjector):
         # in case of user with no username it will use the user ID
         id = self.execute('id', strip=True)
         user_name_or_id = re.match(r"^uid=(?P<user_id>\d+)(\((?P<username>.*)\))? ", id)
-        user = user_name_or_id.group("username") or user_name_or_id.group("user_id") or "unknown"
+
+        user = user_name_or_id.group("username") or user_name_or_id.group("user_id") if user_name_or_id else "unknown"
 
         host = self.execute('hostname', strip=True)
         pwd  = self.execute('pwd', strip=True)
@@ -296,18 +301,18 @@ class WindowsPshCommandInjector(CommandInjector):
         return f"PS {self.current_directory()}> "
 
 
-def get_command_injector(os: OSEnum = None, *args, **kwargs):
+def get_command_injector(os: Optional[OSEnum] = None, *args, **kwargs) -> CommandInjector:
     """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """
     if os is None:
         injector = CommandInjector(*args, **kwargs)
         os = injector.OS
 
-    os_injector_map = {
+    os_injector_map: Dict[OSEnum, Type[CommandInjector]] = {
         OSEnum.LINUX: LinuxCommandInjector,
         OSEnum.WIN_CMD: WindowsCmdCommandInjector,
         OSEnum.WIN_PSH: WindowsPshCommandInjector
     }
-    if os in os_injector_map:
+    if os and os in os_injector_map:
         return os_injector_map[os](*args, **kwargs)
     else:
         raise OsDetectionError(f"Unknown OS: {os}")

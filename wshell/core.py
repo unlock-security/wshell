@@ -4,7 +4,7 @@ import random
 import re
 import sys
 import textwrap
-from typing import List, Union
+from typing import List
 from urllib.parse import urlparse
 
 import platformdirs
@@ -22,14 +22,14 @@ from wshell.status import ExitStatus
 
 
 # noinspection PyDefaultArgument
-def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
+def main(args: List[str] = sys.argv) -> ExitStatus:
     """
     Process arguments and run the main workflow.
     :param args list of command line arguments to parse
     :return exit status code.
     """
     # remove program name from args to not be confused as positional argument
-    program_name, *args = args
+    _, *args = args
 
     parser = argparse.ArgumentParser(
         prog="wshell",
@@ -248,7 +248,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         parser.error(f"Unrecognized argument: {request_item}")
 
     # Replace raw request items with parsed ones
-    del parsed_args.request_items
+    delattr(parsed_args, "request_items")
     parsed_args.post_data = post_data
     parsed_args.headers = headers
 
@@ -260,7 +260,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         parsed_args.os = OSEnum(parsed_args.os)
 
     # Extract host domain to persist history on specific file
-    host = urlparse(parsed_args.url).hostname
+    host: str = urlparse(parsed_args.url).hostname
     history_file = os.path.join(
         platformdirs.user_data_dir(parser.prog),
         "history",

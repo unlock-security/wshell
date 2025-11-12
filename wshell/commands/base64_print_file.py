@@ -1,24 +1,25 @@
 from binascii import Error as BinasciiError
 from typing import override
 
-from cmd2 import Cmd, CommandSet
+from cmd2 import Cmd
 
 from wshell import utils
+from wshell.commands import WshellCommandSet
 
 
-class Base64PrintFileCommandSet(CommandSet):
+class Base64PrintFileCommandSet(WshellCommandSet):
     """
     Overwrite `cat` (in Linux and Windows PSH) and `type` (in Windows CMD) to get file content
     as base64 to avoid some issues when manipulating the output (eg. escape \n)
     """
 
     @override
-    def on_register(self, cmd):
+    def on_register(self, cmd: Cmd):
         super().on_register(cmd)
 
         if cmd.injector.is_windows_cmd():
             self.get_base64_encoded_file_func = self.windows_cmd_get_base64_encoded_file
-            cmd.do_type = self.get_file_content
+            setattr(cmd, "do_type", self.get_file_content)
             cmd.hidden_commands.append("type")
         else:
             if cmd.injector.is_linux():
@@ -26,7 +27,7 @@ class Base64PrintFileCommandSet(CommandSet):
             elif cmd.injector.is_windows_psh():
                 self.do_cat = self.windows_psh_get_base64_encoded_file
 
-            cmd.do_cat = self.get_file_content
+            setattr(cmd, "do_cat", self.get_file_content)
             cmd.hidden_commands.append("cat")
 
 

@@ -2,7 +2,8 @@
 import cmd2
 
 from wshell import validators
-from wshell.commands import get_command_sets
+from wshell.commands import load_commands
+from wshell.commands.registry import command_registry
 from wshell.injectors import CommandInjector
 
 
@@ -55,8 +56,9 @@ class WShellCmd(cmd2.Cmd):
         # Hide alias and overridden commands from help menu
         self.hidden_commands.extend(["cd", "exit", "logout"])
 
-        # Import all modular commands from the commands package
-        for command_set_cls in get_command_sets():
+        # Discover, validate, and load all modular commands
+        load_commands()
+        for command_set_cls in command_registry.get_command_sets():
             self.register_command_set(command_set_cls())
 
     def default(self, statement: cmd2.Statement) -> None:

@@ -140,6 +140,102 @@ def run(output: str) -> str:
     return base64.b64decode(output, validate=False).decode("utf-8", "ignore")
 ```
 
+## Custom commands
+
+Custom commands are special commands that you can run within the WShell prompt. They are not executed on the target system but within WShell itself. These commands are useful for performing actions that are not directly related to the remote shell, such as uploading or downloading files, or managing WShell's state.
+For instance, the built-in `download` command abstracts away the complexity of exfiltrating a file from different operating systems, providing a consistent interface for the user.
+
+WShell automatically discovers and registers any custom command placed in a subdirectory of `wshell/commands`.
+You can check all the available custom commands by typing `help -v` in a WShell prompt:
+
+```sh
+victim@vulnerable-server:/var/www/html/$ help -v
+
+Documented commands (use 'help -v' for verbose/'help <topic>' for details):
+
+File transfer
+======================================================================================================
+download              Download remote file
+upload                Upload local file
+
+Uncategorized
+======================================================================================================
+help                  List available commands or provide detailed help for a specific command
+history               View, run, edit, save, or clear previously entered commands
+quit                  Exit this application
+set                   Set a settable parameter or show current settings of parameters.
+shell                 Execute a command as if at the OS prompt
+```
+
+A custom command can have its own help message and parameters:
+
+```sh
+victim@vulnerable-server:/var/www/html/$ download -h
+usage: download [-h] -r FILENAME [-l FILENAME] [-c SIZE | -n]
+
+Download remote file
+
+options:
+  -h, --help            show this help message and exit
+  -r, --remote FILENAME
+                        Remote file to download
+  -l, --local FILENAME  Local file where to store the downloaded file (default: current folder, same name as remote)
+  -c, --chunk SIZE      Size of the chunk to download in bytes (default: 1024)
+  -n, --no-chunk        Do not split into chunks
+```
+
+### Developing a custom command
+
+To create a custom command, you need to create a new Python file with the name of your choice in a subdirectory of `wshell/commands` (e.g., `wshell/commands/system/my_command.py`). The subdirectory (`system` in this case) will be its category.
+
+Inside the file, create a class that inherits from `wshell.commands.WShellCommandSet`, then you can follow the cmd2's [Modular Commands documentation](https://cmd2.readthedocs.io/en/stable/features/modular_commands/) for the specification.
+
+Basically, you just need to implement a method starting with `do_` for each command you want to add. For example, a `do_phpinfo` method will create a `phpinfo` command.
+
+Here is an example of a simple `phpinfo` command that create a PHP file named `info.php` executing `phpinfo()` in the current directory:
+
+```python
+# wshell/commands/php/phpinfo.py
+import argparse
+
+from cmd2 import with_argparser
+
+from wshell.commands import WShellCommandSet
+
+
+class PHPInfoCommandSet(WShellCommandSet):
+
+    argument_parser = argparse.ArgumentParser(description="Create a new file into the current directory that executes `phpinfo()`")
+    argument_parser.add_argument(
+        "-f", "--filename",
+        metavar="FILENAME",
+        required=False,
+        help="Name of the file",
+        dest="filename",
+        default="info.php"
+    )
+
+    @with_argparser(argument_parser)
+    def do_phpinfo(self, args) -> None:
+        file_content = "<?php phpinfo();"
+        self._dispatch("write_phpinfo_file", args.filename, file_content)
+
+    def _linux_write_phpinfo_file(self, filename, file_content):
+      self._cmd.injector.execute(f"echo -n '{file_content}' > {filename}")
+
+    def _win_psh_write_phpinfo_file(self, filename, file_content):
+      self._cmd.injector.execute(f"Set-Content -Path '{filename}' -Value '{file_content}'")
+
+    def _win_cmd_write_phpinfo_file(self, filename, file_content):
+      self._cmd.injector.execute(f"echo {file_content} > {filename}")
+```
+
+To make this command available in WShell in the `Php` category, you would save it as `wshell/commands/php/phpinfo.py`. Then, from the WShell prompt, you could run it by just typing `phpinfo`.
+
+On top of `cmd2`'s modular command features, WShell overrides the `_cmd` object of the command set to provides access to the current WShell session, including the HTTP client (`self._cmd.injector`), target information, and more. This is useful for creating more complex commands that run commands on the remote system.
+
+For more complex examples, see the implementation of the built-in `upload` and `download` commands in the `wshell/commands/file_transfer` directory.
+
 ## Contributing
 
 Have a look through existing [Issues](https://github.com/unlock-security/wshell/issues) and [Pull Requests](https://github.com/unlock-security/wshell/pulls) that you could help with.

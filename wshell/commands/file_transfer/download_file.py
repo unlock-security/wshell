@@ -1,31 +1,31 @@
 import argparse
 import binascii
 import math
+import os
 from base64 import b64decode
-from typing import override
 
-from cmd2 import CommandSet, with_argparser, with_default_category
+from cmd2 import with_argparser
 
 from wshell import utils, validators
+from wshell.commands import WShellCommandSet
 from wshell.errors import UnsupportedFeatureError
 from wshell.log import logger
 
 
-@with_default_category("File transfer")
-class DownloadFileCommandSet(CommandSet):
+class DownloadFileCommandSet(WShellCommandSet):
 
     argument_parser = argparse.ArgumentParser(description="Download remote file")
     argument_parser.add_argument(
         "-r", "--remote",
         metavar="FILENAME",
         required=True,
-        help="Remote filename to download",
+        help="Remote file to download",
         dest="remote_filename"
     )
     argument_parser.add_argument(
         "-l", "--local",
         metavar="FILENAME",
-        help="Local filename where to store the downloaded file (default: current folder, same name as remote)",
+        help="Local file where to store the downloaded file (default: current folder, same name as remote)",
         dest="local_filename"
     )
     chunk_size_group = argument_parser.add_mutually_exclusive_group()
@@ -44,55 +44,28 @@ class DownloadFileCommandSet(CommandSet):
         dest="use_chunks",
         default=True
     )
-
-    def remote_file_exists(self, filename: str) -> bool:
-        raise NotImplementedError
-    
-    def remote_file_size(self, filename: str) -> int:
-        raise NotImplementedError
-    
-    def get_base64_encoded_file_content(self, filename: str) -> str:
-        raise NotImplementedError
-    
-    def get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
-        raise NotImplementedError
-
-    @override
-    def on_register(self, cmd):
-        super().on_register(cmd)
-
-        if self._cmd.injector.is_linux():
-            self.remote_file_size = self.linux_remote_file_size
-            self.get_base64_encoded_file_content = self.linux_get_base64_encoded_file_content
-            self.get_base64_encoded_chunk = self.linux_get_base64_encoded_chunk
-        elif self._cmd.injector.is_windows_psh():
-            self.remote_file_size = self.windows_psh_remote_file_size
-            self.get_base64_encoded_file_content = self.windows_psh_get_base64_encoded_file_content
-            self.get_base64_encoded_chunk = self.windows_psh_get_base64_encoded_chunk
-        elif self._cmd.injector.is_windows_cmd():
-            self.get_base64_encoded_file_content = self.windows_cmd_get_base64_encoded_file_content
     
     @with_argparser(argument_parser)
     def do_download(self, args) -> None:
         if args.local_filename is None:
-            args.local_filename = args.remote_filename.replace(self._cmd.injector.PATH_DELIMITER, "_")
+            args.local_filename = os.path.basename(args.remote_filename)
 
         try:
             with open(args.local_filename, "wb") as local_file:
                 if not args.use_chunks:
-                    base64_encoded_file_content = self.get_base64_encoded_file_content(args.remote_filename)
+                    base64_encoded_file_content = self._dispatch("get_base64_encoded_file_content", args.remote_filename)
                     local_file.write(b64decode(base64_encoded_file_content))
                 else:
                     if self._cmd.injector.is_windows_cmd():
                         raise UnsupportedFeatureError("Chunked download is not supported on Windows Command Prompt (use -n or --no-chunk instead)")
 
-                    file_size = self.remote_file_size(args.remote_filename)
+                    file_size = self._dispatch("remote_file_size", args.remote_filename)
                     total_chunks = math.ceil(file_size / args.chunk_size)
                     logger.info(f"Downloading {file_size} bytes as {total_chunks} chunks ({args.chunk_size} bytes each)")
 
                     for chunk_index in range(total_chunks):
                         self._cmd.poutput(f"Downloading chunk {chunk_index + 1}/{total_chunks}", end="\r")
-                        base64_encoded_chunk = self.get_base64_encoded_chunk(args.remote_filename, chunk_index, args.chunk_size)
+                        base64_encoded_chunk = self._dispatch("get_base64_encoded_chunk", args.remote_filename, chunk_index, args.chunk_size)
                         local_file.write(b64decode(base64_encoded_chunk))
                     
             logger.info(f"File '{args.remote_filename}' downloaded to '{args.local_filename}'")
@@ -105,13 +78,13 @@ class DownloadFileCommandSet(CommandSet):
     # Linux implementation
     #
 
-    def linux_get_base64_encoded_file_content(self, filename: str) -> str:
+    def _linux_get_base64_encoded_file_content(self, filename: str) -> str:
         return self._cmd.injector.execute(f"base64 -w0 '{filename}' 2>&1")
 
-    def linux_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
+    def _linux_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
         return self._cmd.injector.execute(f"dd bs={chunk_size} count=1 skip={chunk_index} if={filename} status=none | base64 -w0")
 
-    def linux_remote_file_size(self, filename: str) -> int:
+    def _linux_remote_file_size(self, filename: str) -> int:
         return int(self._cmd.injector.execute(f"stat -c %s '{filename}'"))
 
 
@@ -119,11 +92,11 @@ class DownloadFileCommandSet(CommandSet):
     # Windows PSH implementation
     #
 
-    def windows_psh_get_base64_encoded_file_content(self, filename: str) -> str:
-        return self.execute(f"[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content '{filename}')))")
+    def _win_psh_get_base64_encoded_file_content(self, filename: str) -> str:
+        return self._cmd.injector.execute(f"[System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content '{filename}')))")
 
-    def windows_psh_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
-        return self.execute(
+    def _win_psh_get_base64_encoded_chunk(self, filename: str, chunk_index: int, chunk_size: int) -> str:
+        return self._cmd.injector.execute(
             f"$fs = [IO.File]::OpenRead('{filename}'); \
             $fs.Seek({chunk_index}*{chunk_size}, 'Begin') | Out-Null; \
             $buf = New-Object Byte[] {chunk_size}; \
@@ -132,15 +105,15 @@ class DownloadFileCommandSet(CommandSet):
             [Convert]::ToBase64String($buf)"
         )
 
-    def windows_psh_remote_file_size(self, filename: str) -> int:
-        return self._cmd.injector.execute(f"(Get-Item -Path '{filename}').Length")
+    def _win_psh_remote_file_size(self, filename: str) -> int:
+        return int(self._cmd.injector.execute(f"(Get-Item -Path '{filename}').Length"))
 
 
     #
     # Windows CMD implementation
     #
 
-    def windows_cmd_get_base64_encoded_file_content(self, filename: str) -> str:
+    def _win_cmd_get_base64_encoded_file_content(self, filename: str) -> str:
         temp_filename = f"%TEMP%/{utils.random_string()}"
         base64_output = self._cmd.injector.execute(
             f"certutil -encodehex -f '{filename}' {temp_filename} 0x40000001>nul&& \

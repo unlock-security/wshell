@@ -19,6 +19,8 @@ class ExitStatus(IntEnum):
 
     # Command Sets
     ERROR_UNSUPPORTED_FEATURE = 30
+    ERROR_WRONG_COMMAND_SET_TYPE = 31
+    ERROR_COMMAND_CONFLICT = 32
 
     # Signals
     ERROR_CTRL_C = 130

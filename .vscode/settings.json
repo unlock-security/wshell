@@ -9,6 +9,7 @@
     "python.createEnvironment.contentButton": "show",
     "python.terminal.activateEnvironment": true,
     "python.createEnvironment.trigger": "prompt",
+    "python.analysis.typeCheckingMode": "standard",
     "ruff.importStrategy": "fromEnvironment",
     "python.terminal.activateEnvInCurrentTerminal": true,
     "explorer.excludeGitIgnore": true

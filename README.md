@@ -44,27 +44,46 @@ drwxr-xr-x 14 root     root     4096 Mar 18 13:37 ..
 drwxrwx--- 25 www-data www-data 4096 Feb 18 15:31 app
 ```
 
-## Install
+### Real-world use cases
+
+#### cmdchallenge.com
+
+```sh
+$ wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' 'cmd=WSHELL' 'slug=create_file'
+```
+
+#### www.learnshell.org
+
+```sh
+$ wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
+```
+
+
+## Install and update
 
 ```shell
-pipx install git+https://git@github.com/unlock-security/wshell
+# clone the repository and install it in a isolated virtual environment
+$ pipx install git+https://git@github.com/unlock-security/wshell
+
+# update wshell using latest stable git version
+$ pipx upgrade wshell
 ```
 
 ## Development
 
-```
-git clone https://github.com/unlock-security/wshell
-cd wshell/
-python3 -m virtualenv .venv
-source .venv/bin/activate
-pip install -e .
+```sh
+$ git clone https://github.com/unlock-security/wshell
+$ cd wshell/
+$ python3 -m virtualenv .venv
+$ source .venv/bin/activate
+$ pip install -e .
 ```
 
 ## Usage
 
 ```
-usage: wshell [-h] [-v] [--placeholder COMMAND_PLACEHOLDER] [--os {linux,win-cmd,win-psh}] [-m METHOD] [-t SECONDS] [--keep-alive] [--follow] [-ua USER_AGENT | -r] [-j | -f]
-              [--log {critical,error,warning,info,debug}] [--list-scripts] [--input-scripts INPUT_SCRIPTS] [--output-scripts OUTPUT_SCRIPTS]
+usage: wshell [-h] [-v] [--placeholder COMMAND_PLACEHOLDER] [--os {linux,win-cmd,win-psh}] [-m METHOD] [-t SECONDS | --no-timeout] [-d DELAY] [--keep-alive] [--follow] [-ua USER_AGENT | -r]
+              [-j | -f] [--log {critical,error,warning,info,debug}] [--list-scripts] [--input-scripts INPUT_SCRIPTS] [--output-scripts OUTPUT_SCRIPTS]
               URL [REQUEST ITEMS ...]
 
 Turn a web-based {code,command,template} injection in a full featured shell with ease
@@ -85,6 +104,8 @@ HTTP arguments:
   -m, --method METHOD   The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)
   -t, --timeout SECONDS
                         The connection timeout of the request in seconds (default: 3.0)
+  --no-timeout          Disable the connection timeout
+  -d, --delay DELAY     Delay in seconds between each HTTP request (default: 0.0)
   --keep-alive          Use persistent connection (default: True)
   --follow              Follow 30x Location redirects (default: True)
   -ua, --user-agent USER_AGENT
@@ -116,15 +137,15 @@ Example usage:
 ## Scripts
 
 WShell can run input and output scripts which are simple functions used to manipulate input command and output response.
-As an example, if the vulnerable page returns a base64-encoded result you can use `--output-scripts base64_decode` to get
+As an example, if the vulnerable page returns a base64-encoded result you can use `--output-scripts=base64_decode` to get
 the output as plain text.
 
-Scripts can be chained and used more than once, for instance is totally fine to do something like `--output-scripts unescape,base64_decode,base64_decode`.
+Scripts can be chained and used more than once, for instance is totally fine to do something like `--output-scripts=unescape,base64_decode,base64_decode`.
 
 ### Developing a script
 
 Developing a script for WShell is straightforward, just add a python file in `wshell/scripts/input` or `wshell/scripts/output` folder. The file name will
-be the name used to invoke the script from the command line (e.g. if you create `wshell/scripts/output/test.py` you can invoke it with `--output-scripts test`).
+be the name used to invoke the script from the command line (e.g. if you create `wshell/scripts/output/test.py` you can invoke it with `--output-scripts=test`).
 
 Inside the file you have to create a function with the following signature `run(str) -> str`. A docstring to use as a description for the script is mandatory.
 
@@ -133,29 +154,113 @@ As an example, the `base64_decode` output script corresponds to `wshell/scripts/
 ```py
 import base64
 
-
 def run(output: str) -> str:
     """Base64 decode output (requires --os to work)"""
     return base64.b64decode(output, validate=False).decode("utf-8", "ignore")
 ```
 
+## Custom commands
+
+Custom commands are special commands that you can run within the WShell prompt. They are not executed on the target system but within WShell itself. These commands are useful for performing actions that are not directly related to the remote shell, such as uploading or downloading files, or managing WShell's state.
+For instance, the built-in `download` command abstracts away the complexity of exfiltrating a file from different operating systems, providing a consistent interface for the user.
+
+WShell automatically discovers and registers any custom command placed in a subdirectory of `wshell/commands`.
+You can check all the available custom commands by typing `help -v` in a WShell prompt:
+
+```sh
+victim@vulnerable-server:/var/www/html/$ help -v
+
+Documented commands (use 'help -v' for verbose/'help <topic>' for details):
+
+File transfer
+======================================================================================================
+download              Download remote file
+upload                Upload local file
+
+Uncategorized
+======================================================================================================
+help                  List available commands or provide detailed help for a specific command
+history               View, run, edit, save, or clear previously entered commands
+quit                  Exit this application
+set                   Set a settable parameter or show current settings of parameters.
+shell                 Execute a command as if at the OS prompt
+```
+
+A custom command can have its own help message and parameters:
+
+```sh
+victim@vulnerable-server:/var/www/html/$ download -h
+usage: download [-h] -r FILENAME [-l FILENAME] [-c SIZE | -n]
+
+Download remote file
+
+options:
+  -h, --help            show this help message and exit
+  -r, --remote FILENAME
+                        Remote file to download
+  -l, --local FILENAME  Local file where to store the downloaded file (default: current folder, same name as remote)
+  -c, --chunk SIZE      Size of the chunk to download in bytes (default: 1024)
+  -n, --no-chunk        Do not split into chunks
+```
+
+### Developing a custom command
+
+To create a custom command, you need to create a new Python file with the name of your choice in a subdirectory of `wshell/commands` (e.g., `wshell/commands/system/my_command.py`). The subdirectory (`system` in this case) will be its category.
+
+Inside the file, create a class that inherits from `wshell.commands.WShellCommandSet`, then you can follow the cmd2's [Modular Commands documentation](https://cmd2.readthedocs.io/en/stable/features/modular_commands/) for the specification.
+
+Basically, you just need to implement a method starting with `do_` for each command you want to add. For example, a `do_phpinfo` method will create a `phpinfo` command.
+
+Here is an example of a simple `phpinfo` command that create a PHP file named `info.php` executing `phpinfo()` in the current directory:
+
+```python
+# wshell/commands/php/phpinfo.py
+import argparse
+
+from cmd2 import with_argparser
+
+from wshell.commands import WShellCommandSet
+
+
+class PHPInfoCommandSet(WShellCommandSet):
+
+    argument_parser = argparse.ArgumentParser(description="Create a new file into the current directory that executes `phpinfo()`")
+    argument_parser.add_argument(
+        "-f", "--filename",
+        metavar="FILENAME",
+        required=False,
+        help="Name of the file",
+        dest="filename",
+        default="info.php"
+    )
+
+    @with_argparser(argument_parser)
+    def do_phpinfo(self, args) -> None:
+        file_content = "<?php phpinfo();"
+        self._dispatch("write_phpinfo_file", args.filename, file_content)
+
+    def _linux_write_phpinfo_file(self, filename, file_content):
+      self._cmd.injector.execute(f"echo -n '{file_content}' > {filename}")
+
+    def _win_psh_write_phpinfo_file(self, filename, file_content):
+      self._cmd.injector.execute(f"Set-Content -Path '{filename}' -Value '{file_content}'")
+
+    def _win_cmd_write_phpinfo_file(self, filename, file_content):
+      self._cmd.injector.execute(f"echo {file_content} > {filename}")
+```
+
+To make this command available in WShell in the `Php` category, you would save it as `wshell/commands/php/phpinfo.py`. Then, from the WShell prompt, you could run it by just typing `phpinfo`.
+
+On top of `cmd2`'s modular command features, WShell overrides the `_cmd` object of the command set to provides access to the current WShell session, including the HTTP client (`self._cmd.injector`), target information, and more. This is useful for creating more complex commands that run commands on the remote system.
+
+For more complex examples, see the implementation of the built-in `upload` and `download` commands in the `wshell/commands/file_transfer` directory.
+
 ## Contributing
 
-We accept contributions of any kind, including bug fixes, feature requests, and new scripts.
+Have a look through existing [Issues](https://github.com/unlock-security/wshell/issues) and [Pull Requests](https://github.com/unlock-security/wshell/pulls) that you could help with.
+If you'd like to request a feature or report a bug, please [create a GitHub Issue]() using one of the templates provided.
 
-If you want to contribute to this project you can just:
-
-1. Fork the repository
-2. Start a new branch starting from `dev`
-3. Make your changes
-4. Open a Pull Request
-
-When you open a Pull Request, please make sure to follow the next rules:
-
--   Write a clear and descriptive title
--   In the description, write a clear and detailed explanation of the changes
--   There are no conflicts in merging your branch on `dev`
--   If you are fixing a bug, please reference the issue number
+[See contribution guide →](https://github.com/unlock-security/wshell/blob/main/CONTRIBUTING.md)
 
 ---
 

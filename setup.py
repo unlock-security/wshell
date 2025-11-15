@@ -35,11 +35,11 @@ setup(
     ],
     python_requires=">=3.12",
     install_requires=[
-        "cmd2==2.5.11",
+        "cmd2==2.7.0",
         "requests==2.32.4",
         "validator-collection==1.5.0",
-        "colorlog==6.9.0",
-        "platformdirs==4.3.7"
+        "colorlog==6.10.1",
+        "platformdirs==4.5.0"
     ],
     platforms=["posix"],
     classifiers=[

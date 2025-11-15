@@ -32,3 +32,15 @@ class TargetUnreachableError(HttpError):
 class TimeoutExpiredError(HttpError):
     """ The timeout for connect/read/write is expired """
     EXIT_STATUS = ExitStatus.ERROR_TIMEOUT_EXPIRED
+
+class UnsupportedFeatureError(WShellError):
+    """ The feature is not supported for the current OS """
+    EXIT_STATUS = ExitStatus.ERROR_UNSUPPORTED_FEATURE
+
+class WrongCommandSetTypeError(WShellError):
+    """ The command set must be registered on an instance of WShellCmd class """
+    EXIT_STATUS = ExitStatus.ERROR_WRONG_COMMAND_SET_TYPE
+
+class CommandConflictError(WShellError):
+    """Raised when two command sets try to implement the same command."""
+    EXIT_STATUS = ExitStatus.ERROR_COMMAND_CONFLICT

@@ -4,7 +4,7 @@ import random
 import re
 import sys
 import textwrap
-from typing import List, Union
+from typing import List
 from urllib.parse import urlparse
 
 import platformdirs
@@ -22,14 +22,14 @@ from wshell.status import ExitStatus
 
 
 # noinspection PyDefaultArgument
-def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
+def main(args: List[str] = sys.argv) -> ExitStatus:
     """
     Process arguments and run the main workflow.
     :param args list of command line arguments to parse
     :return exit status code.
     """
     # remove program name from args to not be confused as positional argument
-    program_name, *args = args
+    _, *args = args
 
     parser = argparse.ArgumentParser(
         prog="wshell",
@@ -75,12 +75,26 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         "-m", "--method",
         help="The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)"
     )
-    http_group.add_argument(
+    timeout_http_group = http_group.add_mutually_exclusive_group(required=False)
+    timeout_http_group.add_argument(
         "-t", "--timeout",
         metavar="SECONDS",
         type=validators.positive_float,
         default=settings.DEFAULT_TIMEOUT,
-        help='The connection timeout of the request in seconds (default: %(default)s)'
+        help="The connection timeout of the request in seconds (default: %(default)s)"
+    )
+    timeout_http_group.add_argument(
+        "--no-timeout",
+        action="store_const",
+        dest="timeout",
+        const=None,
+        help="Disable the connection timeout"
+    )
+    http_group.add_argument(
+        "-d", "--delay",
+        type=validators.positive_float,
+        default=settings.DEFAULT_DELAY,
+        help="Delay in seconds between each HTTP request (default: %(default)s)"
     )
     persistent_connection_http_group = http_group.add_mutually_exclusive_group(required=False)
     persistent_connection_http_group.add_argument(
@@ -234,7 +248,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         parser.error(f"Unrecognized argument: {request_item}")
 
     # Replace raw request items with parsed ones
-    del parsed_args.request_items
+    delattr(parsed_args, "request_items")
     parsed_args.post_data = post_data
     parsed_args.headers = headers
 
@@ -246,7 +260,7 @@ def main(args: List[Union[str, bytes]] = sys.argv) -> ExitStatus:
         parsed_args.os = OSEnum(parsed_args.os)
 
     # Extract host domain to persist history on specific file
-    host = urlparse(parsed_args.url).hostname
+    host: str = urlparse(parsed_args.url).hostname
     history_file = os.path.join(
         platformdirs.user_data_dir(parser.prog),
         "history",
@@ -267,6 +281,7 @@ def program(args: argparse.Namespace) -> ExitStatus:
             os=args.os,
             allow_redirects=args.allow_redirects,
             timeout=args.timeout,
+            delay=args.delay,
             reuse_connection=args.reuse_connection,
             use_json_post_data=args.use_json_post_data,
             method=args.method,

@@ -1,11 +1,11 @@
 import importlib
 import pkgutil
-from typing import Callable, Dict
+from typing import Callable, Dict, MutableSequence
 
 from wshell.log import logger
 
 
-def load_scripts(package: str, path: str) -> Dict[str, Callable[[str], str]]:
+def load_scripts(package: str, path: MutableSequence[str]) -> Dict[str, Callable[[str], str]]:
     """
     Load all Python modules in the given package and subpath,
     and return a dictionary of all functions with the correct signature and docstring.

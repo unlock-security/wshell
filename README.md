@@ -44,27 +44,46 @@ drwxr-xr-x 14 root     root     4096 Mar 18 13:37 ..
 drwxrwx--- 25 www-data www-data 4096 Feb 18 15:31 app
 ```
 
-## Install
+### Real-world use cases
+
+#### cmdchallenge.com
+
+```sh
+$ wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' 'cmd=WSHELL' 'slug=create_file'
+```
+
+#### www.learnshell.org
+
+```sh
+$ wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
+```
+
+
+## Install and update
 
 ```shell
-pipx install git+https://git@github.com/unlock-security/wshell
+# clone the repository and install it in a isolated virtual environment
+$ pipx install git+https://git@github.com/unlock-security/wshell
+
+# update wshell using latest stable git version
+$ pipx upgrade wshell
 ```
 
 ## Development
 
-```
-git clone https://github.com/unlock-security/wshell
-cd wshell/
-python3 -m virtualenv .venv
-source .venv/bin/activate
-pip install -e .
+```sh
+$ git clone https://github.com/unlock-security/wshell
+$ cd wshell/
+$ python3 -m virtualenv .venv
+$ source .venv/bin/activate
+$ pip install -e .
 ```
 
 ## Usage
 
 ```
-usage: wshell [-h] [-v] [--placeholder COMMAND_PLACEHOLDER] [--os {linux,win-cmd,win-psh}] [-m METHOD] [-t SECONDS] [--keep-alive] [--follow] [-ua USER_AGENT | -r] [-j | -f]
-              [--log {critical,error,warning,info,debug}] [--list-scripts] [--input-scripts INPUT_SCRIPTS] [--output-scripts OUTPUT_SCRIPTS]
+usage: wshell [-h] [-v] [--placeholder COMMAND_PLACEHOLDER] [--os {linux,win-cmd,win-psh}] [-m METHOD] [-t SECONDS | --no-timeout] [-d DELAY] [--keep-alive] [--follow] [-ua USER_AGENT | -r]
+              [-j | -f] [--log {critical,error,warning,info,debug}] [--list-scripts] [--input-scripts INPUT_SCRIPTS] [--output-scripts OUTPUT_SCRIPTS]
               URL [REQUEST ITEMS ...]
 
 Turn a web-based {code,command,template} injection in a full featured shell with ease
@@ -86,6 +105,7 @@ HTTP arguments:
   -t, --timeout SECONDS
                         The connection timeout of the request in seconds (default: 3.0)
   --no-timeout          Disable the connection timeout
+  -d, --delay DELAY     Delay in seconds between each HTTP request (default: 0.0)
   --keep-alive          Use persistent connection (default: True)
   --follow              Follow 30x Location redirects (default: True)
   -ua, --user-agent USER_AGENT
@@ -117,15 +137,15 @@ Example usage:
 ## Scripts
 
 WShell can run input and output scripts which are simple functions used to manipulate input command and output response.
-As an example, if the vulnerable page returns a base64-encoded result you can use `--output-scripts base64_decode` to get
+As an example, if the vulnerable page returns a base64-encoded result you can use `--output-scripts=base64_decode` to get
 the output as plain text.
 
-Scripts can be chained and used more than once, for instance is totally fine to do something like `--output-scripts unescape,base64_decode,base64_decode`.
+Scripts can be chained and used more than once, for instance is totally fine to do something like `--output-scripts=unescape,base64_decode,base64_decode`.
 
 ### Developing a script
 
 Developing a script for WShell is straightforward, just add a python file in `wshell/scripts/input` or `wshell/scripts/output` folder. The file name will
-be the name used to invoke the script from the command line (e.g. if you create `wshell/scripts/output/test.py` you can invoke it with `--output-scripts test`).
+be the name used to invoke the script from the command line (e.g. if you create `wshell/scripts/output/test.py` you can invoke it with `--output-scripts=test`).
 
 Inside the file you have to create a function with the following signature `run(str) -> str`. A docstring to use as a description for the script is mandatory.
 
@@ -133,7 +153,6 @@ As an example, the `base64_decode` output script corresponds to `wshell/scripts/
 
 ```py
 import base64
-
 
 def run(output: str) -> str:
     """Base64 decode output (requires --os to work)"""

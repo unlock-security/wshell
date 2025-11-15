@@ -4,6 +4,6 @@ WShell: Turn a web-based {code,command,template} injection in a full featured sh
 
 import os
 
-__version__ = '0.1.0-beta'
+__version__ = '0.2.10-beta'
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')

@@ -2,12 +2,58 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "WShell debug",
+            "name": "WShell debug (cmdchallenge.com)",
             "type": "debugpy",
             "request": "launch",
             "justMyCode": true,
             "module": "wshell",
-            "showReturnValue": true
+            "showReturnValue": true,
+            "stopOnEntry": false,
+            "args": [
+                "--log=info",
+                "--input-scripts=base64_encode",
+                "--output-scripts=unescape",
+                "--os=linux",
+                "--delay=1",
+                "https://cmdchallenge.com/c/r",
+                "cmd=WSHELL",
+                "slug=create_file"
+            ]
+        },
+        {
+            "name": "WShell debug (learnshell.org)",
+            "type": "debugpy",
+            "request": "launch",
+            "justMyCode": true,
+            "module": "wshell",
+            "showReturnValue": true,
+            "stopOnEntry": false,
+            "args": [
+                "--log=debug",
+                "--output-scripts=unescape",
+                "--os=linux",
+                "--json",
+                "https://www.learnshell.org/",
+                "code=WSHELL",
+                "language=bash"
+            ]
+        },
+        {
+            "name": "WShell debug (onecompiler.com)",
+            "type": "debugpy",
+            "request": "launch",
+            "justMyCode": true,
+            "module": "wshell",
+            "showReturnValue": true,
+            "stopOnEntry": false,
+            "args": [
+                "--log=info",
+                "--output-scripts=unescape",
+                "--json",
+                "https://onecompiler.com/api/code/exec",
+                "properties[language]=bash",
+                "properties[files][][content]=WSHELL"
+            ]
         }
     ]
 }

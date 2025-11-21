@@ -58,6 +58,11 @@ $ wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'ht
 $ wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
 ```
 
+#### onecompiler.com
+
+```sh
+$ wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' 'properties[language]=bash' 'properties[files][][content]=WSHELL'
+```
 
 ## Install and update
 

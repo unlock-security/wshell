@@ -16,6 +16,7 @@ from wshell.errors import (
     TargetUnreachableError,
 )
 from wshell.log import logger
+from wshell.requestitems import parse_request_items
 
 # Disable warnings related to unverified SSL certs
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -117,7 +118,7 @@ class CommandInjector:
         for key, value in self.post_data.items():
             post_data[key] = value.replace(self.command_placeholder, cmd)
 
-        post_data = dict(json=post_data) if self.use_json_post_data else dict(data=post_data)
+        post_data = dict(json=parse_request_items(post_data)) if self.use_json_post_data else dict(data=post_data)
 
         # Slow down the requests in case it is necessary to not being blocked
         time.sleep(self.delay)

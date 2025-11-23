@@ -46,22 +46,19 @@ drwxrwx--- 25 www-data www-data 4096 Feb 18 15:31 app
 
 ### Real-world use cases
 
-#### cmdchallenge.com
-
 ```sh
-$ wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' 'cmd=WSHELL' 'slug=create_file'
-```
+# cmdchallenge.com
+wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' 'cmd=WSHELL' 'slug=create_file'
+# or
+wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' --data-raw='cmd=WSHELL&slug=create_file'
 
-#### www.learnshell.org
+# www.learnshell.org
+wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
 
-```sh
-$ wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
-```
-
-#### onecompiler.com
-
-```sh
-$ wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' 'properties[language]=bash' 'properties[files][][content]=WSHELL'
+# onecompiler.com
+wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' 'properties[language]=bash' 'properties[files][][content]=WSHELL'
+# or
+wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' --data-raw='{"properties":{"language":"bash","files":[{"content":"WSHELL"}]}}'
 ```
 
 ## Install and update

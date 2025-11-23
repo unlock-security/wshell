@@ -1,9 +1,11 @@
 import argparse
+import json
 import os
 import random
 import re
 import sys
 import textwrap
+import urllib.parse
 from typing import List
 from urllib.parse import urlparse
 
@@ -150,6 +152,11 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
         action="store_false",
         help="Data items from the command line are serialized as form fields"
     )
+    http_group.add_argument(
+        "--data-raw",
+        dest="raw_data",
+        help="Specify raw data to be sent as is (both as form fields or as JSON object)"
+    )
 
     log_group = parser.add_argument_group(title="Logging arguments")
     log_group.add_argument(
@@ -246,6 +253,21 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
             continue
 
         parser.error(f"Unrecognized argument: {request_item}")
+
+    # Parse raw data and merge it with POST data
+    if parsed_args.raw_data:
+        if parsed_args.use_json_post_data:
+            raw_data = json.loads(parsed_args.raw_data)
+        else:
+            raw_data = dict(urllib.parse.parse_qsl(parsed_args.raw_data, keep_blank_values=True))
+
+        # Ensure mixed data are of the same type
+        if isinstance(post_data, dict) and isinstance(raw_data, dict):
+            post_data = post_data | raw_data
+        elif post_data and raw_data:
+            parser.error(f"Request items and raw data have incompatible types, cannot merge {type(post_data).__name__} and {type(raw_data).__name__}")
+        else:
+            post_data = post_data or raw_data
 
     # Replace raw request items with parsed ones
     delattr(parsed_args, "request_items")

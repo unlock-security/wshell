@@ -3,7 +3,19 @@ import random
 import re
 import time
 from enum import StrEnum
-from typing import Callable, Dict, List, Optional, Type, override
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    override,
+)
 from urllib.parse import quote as url_encode
 
 import requests
@@ -16,7 +28,6 @@ from wshell.errors import (
     TargetUnreachableError,
 )
 from wshell.log import logger
-from wshell.requestitems import parse_request_items
 
 # Disable warnings related to unverified SSL certs
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -114,11 +125,24 @@ class CommandInjector:
         for key, value in self.headers.items():
             headers[key] = value.replace(self.command_placeholder, cmd)
 
-        post_data = dict()
-        for key, value in self.post_data.items():
-            post_data[key] = value.replace(self.command_placeholder, cmd)
+        # In case of JSON data we could have nested objects, so we need to traverse the dictionary
+        import copy
+        post_data = copy.deepcopy(self.post_data)
+        stack: List[Tuple[Any, Union[str,int,None], Any]] = [(None, None, post_data)]
+        while stack:
+            parent, key, value = stack.pop()
+            if isinstance(value, Mapping):
+                for k, v in value.items():
+                    stack.append((value, k, v))
+            elif isinstance(value, Sequence) and not isinstance(value, str):
+                for i, v in enumerate(value):
+                    stack.append((value, i, v))
+            elif isinstance(value, str):
+                value = value.replace(self.command_placeholder, cmd)
+                if parent is not None:
+                    parent[key] = value
 
-        post_data = dict(json=parse_request_items(post_data)) if self.use_json_post_data else dict(data=post_data)
+        post_data = dict(json=post_data) if self.use_json_post_data else dict(data=post_data)
 
         # Slow down the requests in case it is necessary to not being blocked
         time.sleep(self.delay)

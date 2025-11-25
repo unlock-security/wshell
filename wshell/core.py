@@ -235,7 +235,7 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
 
     # Parse positional arguments to extract POST data and headers
     post_data_regex = re.compile(r"(?P<key>[\w\-.]+(\[\w*\])*)=(?P<value>.*)")  # POST data are in the form "key=value", "key[]=value" or "key[other]=value"
-    headers_regex = re.compile(r"(?P<key>[\w\-.]+):(?P<value>.*)")  # HTTP headers are in the form "key:value"
+    headers_regex = re.compile(r"(?P<key>[\w\-.]+):\s*(?P<value>.*)")  # HTTP headers are in the form "key:value"
 
     post_data = dict()
     headers = dict()

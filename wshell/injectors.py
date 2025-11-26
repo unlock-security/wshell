@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import random
 import re
@@ -126,7 +127,6 @@ class CommandInjector:
             headers[key] = value.replace(self.command_placeholder, cmd)
 
         # In case of JSON data we could have nested objects, so we need to traverse the dictionary
-        import copy
         post_data = copy.deepcopy(self.post_data)
         stack: List[Tuple[Any, Union[str,int,None], Any]] = [(None, None, post_data)]
         while stack:

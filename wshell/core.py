@@ -20,6 +20,7 @@ from wshell.injectors import OSEnum, get_command_injector
 from wshell.log import logger
 from wshell.scripts import input_scripts, output_scripts
 from wshell.status import ExitStatus
+from wshell.update import Updater
 
 
 # noinspection PyDefaultArgument
@@ -189,6 +190,35 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
         help="Use one or more custom output script (comma separated, order matters)"
     )
 
+    # Automatic update
+    update_group = parser.add_argument_group(title='Automatic updates')
+    enable_update_group = update_group.add_mutually_exclusive_group(required=False)
+    enable_update_group.add_argument(
+        "--update",
+        action="store_true",
+        default=settings.DEFAULT_CHECK_FOR_UPDATES,
+        help="Check for updates on startup (default: %(default)s)"
+    )
+    enable_update_group.add_argument(
+        "--no-update",
+        dest="update",
+        action="store_false",
+        help="Do not check for updates on startup"
+    )
+    prerelease_update_group = update_group.add_mutually_exclusive_group(required=False)
+    prerelease_update_group.add_argument(
+        "--include-prerelease",
+        action="store_true",
+        default=settings.DEFAULT_INCLUDE_PRERELEASE,
+        help="Includes pre-release while searching for updates (default: %(default)s)"
+    )
+    prerelease_update_group.add_argument(
+        "--no-include-prerelease",
+        dest="include_prerelease",
+        action="store_false",
+        help="Includes stable releases only while searching for updates"
+    )
+
     # Positional parameters
     parser.add_argument(
         "url",
@@ -222,6 +252,9 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
 
     # Specify the log level to the WShell root logger
     logger.setLevel(parsed_args.log_level.upper())
+
+    if parsed_args.update:
+        Updater(parsed_args.include_prerelease).update()
 
     if parsed_args.use_random_agent:
         # Pick a random user-agent excluding empty and comment lines

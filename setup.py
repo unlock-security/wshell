@@ -11,7 +11,7 @@ def long_description():
 setup(
     name='wshell',
     version=wshell.__version__,
-    description=wshell.__doc__.strip(),
+    description=wshell.__doc__.strip(), # pyright: ignore[reportOptionalMemberAccess]
     long_description=long_description(),
     long_description_content_type="text/markdown",
     keywords="shell,webshell,command injection,security,ctf-tools,penetration testing,rce,remote code execution",

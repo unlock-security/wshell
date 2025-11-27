@@ -155,7 +155,7 @@ class CommandInjector:
                 allow_redirects=self.allow_redirects,
                 timeout=self.timeout,
                 verify=False,
-                **post_data
+                **post_data # pyright: ignore[reportArgumentType]
             )
         except requests.exceptions.ConnectionError as e:
             raise TargetUnreachableError(e)

@@ -10,7 +10,7 @@ def long_description():
 
 setup(
     name='wshell',
-    version=wshell.__version__,
+    version="0.2.10-beta.0",
     description=wshell.__doc__.strip(), # pyright: ignore[reportOptionalMemberAccess]
     long_description=long_description(),
     long_description_content_type="text/markdown",
@@ -39,6 +39,7 @@ setup(
         "requests==2.32.4",
         "validator-collection==1.5.0",
         "colorlog==6.10.1",
+        "packaging==24.2",
         "platformdirs==4.5.0"
     ],
     platforms=["posix"],

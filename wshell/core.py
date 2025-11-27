@@ -52,7 +52,7 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
     parser.add_argument(
         "-v", "--version",
         action="version",
-        version=f"%(prog)s v{wshell.__version__}",
+        version=f"%(prog)s v{wshell.VERSION}",
         help="Show the version number and exit"
     )
 

@@ -9,7 +9,6 @@ import urllib.parse
 from typing import List
 from urllib.parse import urlparse
 
-import platformdirs
 import requests
 import requests.utils
 
@@ -283,11 +282,7 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
 
     # Extract host domain to persist history on specific file
     host: str = urlparse(parsed_args.url).hostname
-    history_file = os.path.join(
-        platformdirs.user_data_dir(parser.prog),
-        "history",
-        f"{host}.json"
-    )
+    history_file = os.path.join(wshell.USER_HISTORY_DIR, f"{host}.json")
     parsed_args.history_file = history_file
 
     return program(parsed_args)

@@ -16,6 +16,7 @@ import wshell
 from wshell import settings, validators
 from wshell.cli import WShellCmd
 from wshell.errors import WShellError
+from wshell.httpdata import to_nested_dictionary
 from wshell.injectors import OSEnum, get_command_injector
 from wshell.log import logger
 from wshell.scripts import input_scripts, output_scripts
@@ -285,6 +286,9 @@ def main(args: List[str] = sys.argv) -> ExitStatus:
             continue
 
         parser.error(f"Unrecognized argument: {request_item}")
+
+    if parsed_args.use_json_post_data:
+        post_data = to_nested_dictionary(post_data)
 
     # Parse raw data and merge it with POST data
     if parsed_args.raw_data:

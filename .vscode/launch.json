@@ -10,6 +10,7 @@
             "showReturnValue": true,
             "stopOnEntry": false,
             "args": [
+                "--no-update",
                 "--log=info",
                 "--input-scripts=base64_encode",
                 "--output-scripts=unescape",
@@ -29,6 +30,7 @@
             "showReturnValue": true,
             "stopOnEntry": false,
             "args": [
+                "--no-update",
                 "--log=debug",
                 "--output-scripts=unescape",
                 "--os=linux",
@@ -47,6 +49,7 @@
             "showReturnValue": true,
             "stopOnEntry": false,
             "args": [
+                "--no-update",
                 "--log=info",
                 "--output-scripts=unescape",
                 "--json",

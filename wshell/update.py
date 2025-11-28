@@ -92,7 +92,7 @@ class Updater:
 
         PACKAGE_MANAGERS_COMMANDS = {
             "pip": ["pip", "install", "--upgrade", versioned_url],
-            "pipx": ["pipx", "upgrade", versioned_url],
+            "pipx": ["pipx", "install", "--foce", versioned_url],
             "uv": ["uv", "tool", "install", "--upgrade", versioned_url],
         }
 

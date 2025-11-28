@@ -1,8 +1,7 @@
-# NOTE: This could become a separate module to publish
-
 import importlib.metadata
 import shutil
 import subprocess
+from typing import Optional
 
 import requests
 from packaging.version import InvalidVersion, Version
@@ -29,7 +28,7 @@ class Updater:
             self.origin_url = origin.url
             self.is_local = self.origin_url.startswith("file:")
     
-    def _fetch_latest_version(self):
+    def _fetch_latest_version(self) -> Optional[tuple[Version, str]]:
         response = requests.get(
             url=wshell.GITHUB_RELEASES_URL,
             headers={"Accept": "application/vnd.github.v3+json"}
@@ -44,7 +43,7 @@ class Updater:
             version_list = response.json()
             for version in version_list:
                 if version["prerelease"] == self.include_prerelease:
-                    return Version(version["tag_name"])
+                    return Version(version["tag_name"]), version["tag_name"]
 
             if not self.include_prerelease:
                 logger.warning("No stable version found. Try including prereleases.")
@@ -61,8 +60,9 @@ class Updater:
             logger.warning("Installed as local or editable package. Skipping auto-update.")
             return False
 
-        latest_version = self._fetch_latest_version()
-        if not latest_version:
+        if ver := self._fetch_latest_version():
+            latest_version, tag_name = ver
+        else:
             logger.error("Failed to fetch latest version number. Skipping auto-update.")
             return False
 
@@ -84,13 +84,16 @@ class Updater:
                         self.installer = "pipx"
                         break
 
-        return self._run_upgrade(self.installer)
+        return self._run_upgrade(self.installer, tag_name)
 
-    def _run_upgrade(self, package_manager: str) -> bool:
+    def _run_upgrade(self, package_manager: str, tag_name: str) -> bool:
+
+        versioned_url = f"{self.origin_url}@{tag_name}"
+
         PACKAGE_MANAGERS_COMMANDS = {
-            "pip": ["pip", "install", "--upgrade", wshell.__name__],
-            "pipx": ["pipx", "upgrade", wshell.__name__],
-            "uv": ["uv", "tool", "install", "--upgrade", wshell.__name__],
+            "pip": ["pip", "install", "--upgrade", versioned_url],
+            "pipx": ["pipx", "upgrade", versioned_url],
+            "uv": ["uv", "tool", "install", "--upgrade", versioned_url],
         }
 
         if package_manager not in PACKAGE_MANAGERS_COMMANDS:

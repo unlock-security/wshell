@@ -1,7 +1,5 @@
 from setuptools import setup
 
-import wshell
-
 
 def long_description():
     with open("README.md", encoding="utf8") as f:
@@ -11,7 +9,7 @@ def long_description():
 setup(
     name='wshell',
     version="0.2.10-beta.0",
-    description=wshell.__doc__.strip(), # pyright: ignore[reportOptionalMemberAccess]
+    description="Turn a web-based {code,command,template} injection in a full featured shell with ease.",
     long_description=long_description(),
     long_description_content_type="text/markdown",
     keywords="shell,webshell,command injection,security,ctf-tools,penetration testing,rce,remote code execution",

@@ -3,7 +3,6 @@ import hashlib
 import random
 import re
 import time
-from enum import StrEnum
 from typing import (
     Any,
     Callable,
@@ -32,12 +31,6 @@ from wshell.log import logger
 
 # Disable warnings related to unverified SSL certs
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
-class OSEnum(StrEnum):
-    LINUX = "linux"
-    WIN_CMD = "win-cmd"
-    WIN_PSH = "win-psh"
 
 
 class CommandInjector:

@@ -52,6 +52,11 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         help="Use a custom command placeholder (default: %(default)s)"
     )
     parser.add_argument(
+        "--prompt",
+        type=validators.not_empty,
+        help="Use a custom command prompt on REPL shell (default: mimic remote system prompt)"
+    )
+    parser.add_argument(
         "--os",
         default=None,
         choices=[*OSEnum],

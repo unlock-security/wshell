@@ -31,6 +31,7 @@ class Config:
     url: str
     method: str
     command_placeholder: str = "WSHELL"
+    prompt: Optional[str] = None
 
     # Logging settings
     log_level: str = "warning"

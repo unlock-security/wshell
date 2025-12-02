@@ -47,6 +47,10 @@ class CommandInjector:
         self.use_json = config.use_json
         self.cwd = "."
         
+        if config.prompt is not None:
+            # overwrite default prompt function
+            self.get_prompt = lambda: f"{config.prompt} "
+
         self._detect_os()
         config.os = self.OS
 

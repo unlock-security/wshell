@@ -2,7 +2,9 @@ import sys
 
 import colorlog
 
-logger = colorlog.getLogger("wshell")
+import wshell
+
+logger = colorlog.getLogger(wshell.__name__)
 
 _logger_handler = colorlog.StreamHandler(sys.stderr)
 _logger_handler.setFormatter(

@@ -1,16 +1,14 @@
+from __future__ import annotations
+
 import copy
 import hashlib
 import random
 import re
-import time
-from enum import StrEnum
 from typing import (
     Any,
-    Callable,
     Dict,
     List,
     Mapping,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -19,25 +17,15 @@ from typing import (
 )
 from urllib.parse import quote as url_encode
 
-import requests
-import urllib3
-
-from wshell import settings
+from wshell.config import Config
+from wshell.enums import OSEnum
 from wshell.errors import (
     CommandExecutionError,
     OsDetectionError,
     TargetUnreachableError,
 )
+from wshell.http.client import HttpClient
 from wshell.log import logger
-
-# Disable warnings related to unverified SSL certs
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-
-class OSEnum(StrEnum):
-    LINUX = "linux"
-    WIN_CMD = "win-cmd"
-    WIN_PSH = "win-psh"
 
 
 class CommandInjector:
@@ -47,39 +35,20 @@ class CommandInjector:
     PATH_DELIMITER = "/"
     CURRENT_DIRECTORY_COMMAND = ""
 
-    def __init__(
-            self,
-            reuse_connection: bool,
-            allow_redirects: bool,
-            use_json_post_data: bool,
-            method: str,
-            url: str,
-            timeout: Optional[float] = settings.DEFAULT_TIMEOUT,
-            delay: float = settings.DEFAULT_DELAY,
-            post_data: Dict[str, str] = dict(),
-            headers: Dict[str, str] = dict(),
-            command_placeholder: str = settings.DEFAULT_COMMAND_PLACEHOLDER,
-            input_scripts: List[Callable[[str], str]] = [],
-            output_scripts: List[Callable[[str], str]] = []
-    ):
-        self.http = requests.Session() if reuse_connection else requests
-        self.allow_redirects = allow_redirects
-        self.timeout = timeout
-        self.delay = delay
-        self.use_json_post_data = use_json_post_data
-        self.url = url
-        self.headers = headers
-        self.post_data = post_data
-        self.method = method
-
-        self.command_placeholder = command_placeholder
-
-        self.input_scripts = input_scripts
-        self.output_scripts = output_scripts
-
+    def __init__(self, config: Config):
+        self.http_client = HttpClient(config)
+        self.url = config.url
+        self.headers = config.headers
+        self.body_params = config.body_params
+        self.method = config.method
+        self.command_placeholder = config.command_placeholder
+        self.input_scripts = config.input_scripts
+        self.output_scripts = config.output_scripts
+        self.use_json = config.use_json
         self.cwd = "."
-
+        
         self._detect_os()
+        config.os = self.OS
 
     def execute(self, cmd: str, strip: bool = True) -> str:
         """ Execute the specified command on the target
@@ -127,8 +96,8 @@ class CommandInjector:
             headers[key] = value.replace(self.command_placeholder, cmd)
 
         # In case of JSON data we could have nested objects, so we need to traverse the dictionary
-        post_data = copy.deepcopy(self.post_data)
-        stack: List[Tuple[Any, Union[str,int,None], Any]] = [(None, None, post_data)]
+        body_params = copy.deepcopy(self.body_params)
+        stack: List[Tuple[Any, Union[str,int,None], Any]] = [(None, None, body_params)]
         while stack:
             parent, key, value = stack.pop()
             if isinstance(value, Mapping):
@@ -142,22 +111,21 @@ class CommandInjector:
                 if parent is not None:
                     parent[key] = value
 
-        post_data = dict(json=post_data) if self.use_json_post_data else dict(data=post_data)
-
-        # Slow down the requests in case it is necessary to not being blocked
-        time.sleep(self.delay)
+        body_params_kwargs: Dict[str, Any] = {}
+        if self.use_json:
+            body_params_kwargs['json'] = body_params
+        else:
+            body_params_kwargs['data'] = body_params
 
         try:
-            response = self.http.request(
+            response = self.http_client.send_request(
                 self.method,
                 url,
                 headers=headers,
-                allow_redirects=self.allow_redirects,
-                timeout=self.timeout,
-                verify=False,
-                **post_data # pyright: ignore[reportArgumentType]
+                **body_params_kwargs
             )
-        except requests.exceptions.ConnectionError as e:
+        except TargetUnreachableError as e:
+            # Re-raise as CommandExecutionError or handle as appropriate for execute method
             raise TargetUnreachableError(e)
 
         output = response.text
@@ -326,18 +294,28 @@ class WindowsPshCommandInjector(CommandInjector):
         return f"PS {self.current_directory()}> "
 
 
-def get_command_injector(os: Optional[OSEnum] = None, *args, **kwargs) -> CommandInjector:
+def get_command_injector(config: Config) -> CommandInjector:
     """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """
-    if os is None:
-        injector = CommandInjector(*args, **kwargs)
-        os = injector.OS
-
     os_injector_map: Dict[OSEnum, Type[CommandInjector]] = {
         OSEnum.LINUX: LinuxCommandInjector,
         OSEnum.WIN_CMD: WindowsCmdCommandInjector,
         OSEnum.WIN_PSH: WindowsPshCommandInjector
     }
-    if os and os in os_injector_map:
-        return os_injector_map[os](*args, **kwargs)
-    else:
-        raise OsDetectionError(f"Unknown OS: {os}")
+
+    if config.os:
+        injector_class = os_injector_map.get(config.os)
+        if not injector_class:
+            raise OsDetectionError(f"Unknown OS: {config.os}")
+        return injector_class(config)
+
+    base_injector = CommandInjector(config)
+
+    if not base_injector.OS:
+        raise OsDetectionError("Automatic OS detection failed")
+    
+    specific_injector_class = os_injector_map.get(base_injector.OS)
+
+    if not specific_injector_class:
+        raise OsDetectionError(f"Detection resulted in an unknown OS: {base_injector.OS}")
+    
+    return specific_injector_class(config)

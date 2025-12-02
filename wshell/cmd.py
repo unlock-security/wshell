@@ -58,8 +58,8 @@ class WShellCmd(cmd2.Cmd):
 
         # Discover, validate, and load all modular commands
         load_commands()
-        for command_set_cls in command_registry.get_command_sets():
-            self.register_command_set(command_set_cls())
+        for command_set_class in command_registry.get_command_sets():
+            self.register_command_set(command_set_class())
 
     def default(self, statement: cmd2.Statement) -> None:
         """ In case the user typed a non-builtin command, send it to the target. """

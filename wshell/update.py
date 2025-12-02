@@ -7,6 +7,7 @@ import requests
 from packaging.version import InvalidVersion, Version
 
 import wshell
+import wshell.constants
 from wshell.log import logger
 
 
@@ -30,7 +31,7 @@ class Updater:
     
     def _fetch_latest_version(self) -> Optional[tuple[Version, str]]:
         response = requests.get(
-            url=wshell.GITHUB_RELEASES_URL,
+            url=wshell.constants.GITHUB_RELEASES_URL,
             headers={"Accept": "application/vnd.github.v3+json"}
         )
 
@@ -66,11 +67,11 @@ class Updater:
             logger.error("Failed to fetch latest version number. Skipping auto-update.")
             return False
 
-        if latest_version <= wshell.VERSION:
-            logger.info(f"Latest version already installed: {wshell.VERSION}")
+        if latest_version <= wshell.constants.VERSION:
+            logger.info(f"Latest version already installed: {wshell.constants.VERSION}")
             return False
 
-        logger.warning(f"Newer version available: {wshell.VERSION} → {latest_version}. Running update routine…")
+        logger.warning(f"Newer version available: {wshell.constants.VERSION} → {latest_version}. Running update routine…")
 
         if not self.installer:
             logger.error("Unable to determine installer. Please, update manually.")

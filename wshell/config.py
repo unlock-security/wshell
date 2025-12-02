@@ -61,6 +61,8 @@ class Config:
     def from_args(args: argparse.Namespace) -> Config:
         """Builds the final Config object from parsed arguments."""
 
+        args.log_level = args.log_level.upper()
+
         if args.use_random_agent:
             with open(wshell.constants.USER_AGENT_FILEPATH, "r") as f:
                 args.user_agent = random.choice(
@@ -95,30 +97,15 @@ class Config:
             elif not body_params and raw_data_dict:
                 body_params = raw_data_dict
 
-        method = args.method or ("POST" if body_params else "GET")
+        args.body_params = body_params
+        args.headers = headers
+
+        args.method = args.method or ("POST" if body_params else "GET")
         if not args.method:
-            logger.info(f"HTTP verb not specified. Using '{method}' based on parameters")
+            logger.info(f"HTTP verb not specified. Using '{args.method}' based on parameters")
 
         host = urlparse(args.url).hostname
-        history_file = os.path.join(wshell.constants.USER_HISTORY_DIR, f"{host}.json")
+        args.history_file = os.path.join(wshell.constants.USER_HISTORY_DIR, f"{host}.json")
 
-        return Config(
-            url=args.url,
-            method=method,
-            command_placeholder=args.command_placeholder,
-            headers=headers,
-            body_params=body_params,
-            use_json=args.use_json,
-            timeout=args.timeout,
-            delay=args.delay,
-            reuse_connection=args.reuse_connection,
-            allow_redirects=args.allow_redirects,
-            user_agent=args.user_agent,
-            os=args.os,
-            input_scripts=args.input_scripts,
-            output_scripts=args.output_scripts,
-            log_level=args.log_level.upper(),
-            history_file=history_file,
-            check_for_updates=args.check_for_updates,
-            include_prerelease=args.include_prerelease
-        )
+        # Ignore arguments that does not match any config name
+        return Config(**dict(filter(lambda arg: arg[0] in Config.__annotations__, vars(args).items())))

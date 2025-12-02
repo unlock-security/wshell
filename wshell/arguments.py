@@ -146,7 +146,8 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         help="Specify raw data to be sent as is (both as form fields or as JSON object)"
     )
 
-    log_group = parser.add_argument_group(title="Logging arguments")
+    # Logging
+    log_group = parser.add_argument_group(title="Logging")
     log_group.add_argument(
         "--log",
         dest="log_level",
@@ -155,6 +156,7 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         help="To specify the log messages level"
     )
 
+    # Input/Output scripts
     scripts_group = parser.add_argument_group(title="Input/Output scripts")
     scripts_group.add_argument(
         "--list-scripts",
@@ -178,7 +180,7 @@ def parse_args(args: List[str]) -> argparse.Namespace:
         help="Use one or more custom output script (comma separated, order matters)"
     )
 
-    # Automatic update
+    # Automatic updates
     update_group = parser.add_argument_group(title='Automatic updates')
     enable_update_group = update_group.add_mutually_exclusive_group(required=False)
     enable_update_group.add_argument(

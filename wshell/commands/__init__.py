@@ -50,8 +50,8 @@ class WShellCommandSet(CommandSet):
         return method(*args, **kwargs)
 
     def on_register(self, cmd: Cmd) -> None:
-        # Avoid circular dependencies with cli component
-        from wshell.cli import WShellCmd
+        # Avoid circular dependencies with cmd component
+        from wshell.cmd import WShellCmd
 
         if not isinstance(cmd, WShellCmd):
             raise WrongCommandSetTypeError(f"Expected {WShellCmd.__name__}, got {type(cmd).__name__}")

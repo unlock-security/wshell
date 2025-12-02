@@ -2,7 +2,7 @@ import importlib
 import inspect
 import pkgutil
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 from cmd2 import Cmd, CommandSet
 
@@ -49,6 +49,7 @@ class WShellCommandSet(CommandSet):
 
         return method(*args, **kwargs)
 
+    @override
     def on_register(self, cmd: Cmd) -> None:
         # Avoid circular dependencies with cmd component
         from wshell.cmd import WShellCmd

@@ -17,7 +17,7 @@ class Updater:
         self.include_prerelease = include_prerelease
         self.installer = None
         self.is_local = None
-        self.is_editable = None
+        self.is_editable = False
         self.origin_url = None        
 
         dist = importlib.metadata.distribution(wshell.__name__)
@@ -25,10 +25,12 @@ class Updater:
             self.installer = installer.strip()
 
         if origin := dist.origin:
-            self.is_editable = getattr(origin.dir_info, "editable", None)
             self.origin_url = origin.url
             self.is_local = self.origin_url.startswith("file:")
-    
+            # only local packages can be editable
+            if self.is_local:
+                self.is_editable = getattr(origin.dir_info, "editable", False)
+
     def _fetch_latest_version(self) -> Optional[tuple[Version, str]]:
         response = requests.get(
             url=wshell.constants.GITHUB_RELEASES_URL,

@@ -12,7 +12,7 @@
             "args": [
                 "--no-update",
                 "--log=info",
-                "--input-scripts=base64_encode",
+                "--input-scripts=base64encode",
                 "--output-scripts=unescape",
                 "--os=linux",
                 "--delay=1",

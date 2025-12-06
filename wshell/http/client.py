@@ -25,7 +25,6 @@ class HttpClient:
         self.allow_redirects = config.allow_redirects
         self.timeout = config.timeout
         self.delay = config.delay
-        self.verify = False
         
         requests.utils.default_user_agent = lambda: config.user_agent
 
@@ -51,7 +50,7 @@ class HttpClient:
                 json=json,
                 allow_redirects=self.allow_redirects,
                 timeout=self.timeout,
-                verify=self.verify,
+                verify=False # This is a post-exploitation tool, we don't care about unverified SSL certs
             )
             return response
         except requests.exceptions.ConnectionError as e:

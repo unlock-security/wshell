@@ -37,7 +37,7 @@ setup(
         "requests==2.32.4",
         "validator-collection==1.5.0",
         "colorlog==6.10.1",
-        "packaging==25.0",
+        "packaging==26.0",
         "platformdirs==4.5.0"
     ],
     platforms=["posix"],

@@ -33,7 +33,7 @@ setup(
     ],
     python_requires=">=3.12",
     install_requires=[
-        "cmd2==2.7.0",
+        "cmd2==3.2.0",
         "requests==2.32.4",
         "validator-collection==1.5.0",
         "colorlog==6.10.1",

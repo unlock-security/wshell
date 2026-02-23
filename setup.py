@@ -38,7 +38,7 @@ setup(
         "validator-collection==1.5.0",
         "colorlog==6.10.1",
         "packaging==25.0",
-        "platformdirs==4.5.0"
+        "platformdirs==4.9.2"
     ],
     platforms=["posix"],
     classifiers=[

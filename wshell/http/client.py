@@ -1,10 +1,11 @@
 """
 HTTP Client for WShell.
 """
+
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 import urllib3
@@ -20,37 +21,42 @@ class HttpClient:
     """
     A dedicated HTTP client for WShell, encapsulating requests logic.
     """
+
     def __init__(self, config: Config):
         self.http = requests.Session() if config.reuse_connection else requests
+        self.user_agent = config.user_agent
         self.allow_redirects = config.allow_redirects
         self.timeout = config.timeout
         self.delay = config.delay
-        
-        requests.utils.default_user_agent = lambda: config.user_agent
+
+        if isinstance(self.http, requests.Session):
+            self.http.headers.update({"User-Agent": self.user_agent})
 
     def send_request(
         self,
         method: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None
+        headers: dict[str, str] | None = None,
+        data: dict[str, Any] | None = None,
+        json: dict[str, Any] | None = None,
     ) -> requests.Response:
         """
         Sends an HTTP request.
         """
         time.sleep(self.delay)
+        request_headers = dict(headers or {})
+        request_headers.setdefault("User-Agent", self.user_agent)
 
         try:
             response = self.http.request(
                 method,
                 url,
-                headers=headers,
+                headers=request_headers,
                 data=data,
                 json=json,
                 allow_redirects=self.allow_redirects,
                 timeout=self.timeout,
-                verify=False # This is a post-exploitation tool, we don't care about unverified SSL certs
+                verify=False,  # This is a post-exploitation tool, we don't care about unverified SSL certs
             )
             return response
         except requests.exceptions.ConnectionError as err:

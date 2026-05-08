@@ -1,7 +1,7 @@
 """ A collection of validators to use in argument parsing """
 
 import argparse
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
 from urllib.parse import urlparse
 
 import requests.utils
@@ -25,8 +25,8 @@ def http_url(value: str) -> str:
             allow_empty=False,
             allow_special_ips=True
         )
-    except InvalidURLError:
-        raise argparse.ArgumentTypeError(f"Invalid URL: {url}")
+    except InvalidURLError as error:
+        raise argparse.ArgumentTypeError(f"Invalid URL: {url}") from error
     else:
         scheme = urlparse(url).scheme
         if scheme not in ["http", "https"]:
@@ -54,8 +54,8 @@ def positive_integer(value: str) -> int:
     """
     try:
         int_value = int(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError("Value must be numeric")
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Value must be numeric") from error
 
     if int_value <= 0:
         raise argparse.ArgumentTypeError("Value must be greater than zero")
@@ -70,8 +70,8 @@ def positive_float(value: str) -> float:
     """
     try:
         float_value = float(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError("Value must be numeric")
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Value must be numeric") from error
 
     if float_value <= 0:
         raise argparse.ArgumentTypeError("Value must be greater than zero")
@@ -86,8 +86,8 @@ def timeout(value: str) -> Optional[float]:
     """
     try:
         float_value = float(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError("Value must be numeric")
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Value must be numeric") from error
 
     # Allow 0 to mean no timeout
     if float_value == 0:

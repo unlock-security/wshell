@@ -53,5 +53,5 @@ class HttpClient:
                 verify=False # This is a post-exploitation tool, we don't care about unverified SSL certs
             )
             return response
-        except requests.exceptions.ConnectionError as e:
-            raise TargetUnreachableError(e)
+        except requests.exceptions.ConnectionError as err:
+            raise TargetUnreachableError from err

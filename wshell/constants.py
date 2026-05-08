@@ -1,4 +1,3 @@
-import importlib.metadata
 import os
 
 import platformdirs
@@ -6,7 +5,7 @@ from packaging.version import Version
 
 import wshell
 
-VERSION = Version(importlib.metadata.version(wshell.__name__))
+VERSION = Version(wshell.__version__)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 USER_AGENT_FILEPATH = os.path.join(DATA_DIR, "user-agents.txt")

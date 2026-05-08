@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wshell"
+dynamic = ["version", "readme"]
+description = "Turn a web-based {code,command,template} injection in a full featured shell with ease."
+authors = [
+  { name = "Francesco Marano (@mrnfrancesco)", email = "francesco.marano@unlock-security.it" },
+]
+license = { text = "GPLv3" }
+requires-python = ">=3.12"
+keywords = ["shell", "webshell", "command injection", "security", "ctf-tools", "penetration testing", "rce", "remote code execution"]
+dependencies = [
+  "cmd2==2.7.0",
+  "requests==2.32.4",
+  "validator-collection==1.5.0",
+  "colorlog==6.10.1",
+  "packaging==25.0",
+  "platformdirs==4.5.0",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Operating System :: POSIX",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Security",
+  "Topic :: Terminals",
+  "Topic :: Utilities",
+]
+
+[project.urls]
+Source-Code = "https://github.com/unlock-security/wshell"
+Issue-Tracker = "https://github.com/unlock-security/wshell/issues"
+
+[project.scripts]
+wshell = "wshell.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.6",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "wshell.__version__" }
+readme = { file = ["README.md"], content-type = "text/markdown" }
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["wshell*"]
+
+[tool.setuptools.data-files]
+data = ["data/user-agents.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

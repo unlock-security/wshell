@@ -13,7 +13,7 @@ license = { text = "GPLv3" }
 requires-python = ">=3.12"
 keywords = ["shell", "webshell", "command injection", "security", "ctf-tools", "penetration testing", "rce", "remote code execution"]
 dependencies = [
-  "cmd2==2.7.0",
+  "cmd2==3.2.2",
   "requests==2.33.0",
   "validator-collection==1.5.0",
   "colorlog==6.10.1",

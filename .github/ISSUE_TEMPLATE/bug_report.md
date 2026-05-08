@@ -1,10 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
+title: ""
 labels: bug
-assignees: ''
-
+assignees: ""
 ---
 
 **Describe the bug**
@@ -26,6 +25,6 @@ Add any other context about the problem here.
 
 - WShell version: x.y.z
 - Target OS:
-  - [x] Linux
-  - [ ] Windows CMD
-  - [ ] Windows Powershell
+    - [x] Linux
+    - [ ] Windows CMD
+    - [ ] Windows Powershell

@@ -73,7 +73,7 @@ Please make sure your changes conform to [Style Guide for Python Code](https://p
 
 When you open a Pull Request, please make sure to follow the following rules:
 
--   Write a clear and descriptive title
--   In the description, write a clear and detailed explanation of the changes
--   There are no conflicts in merging your branch on `dev`
--   If you are fixing a bug, please reference the issue number
+- Write a clear and descriptive title
+- In the description, write a clear and detailed explanation of the changes
+- There are no conflicts in merging your branch on `dev`
+- If you are fixing a bug, please reference the issue number

@@ -19,13 +19,13 @@ WShell is a post-exploitation tool designed to exploit any web-based command inj
 
 ## ✨ Key Features
 
--   **Interactive Pseudo-Shell**: Experience a shell with support for commands like `cd` and a persistent command history.
--   **Automatic OS Detection**: Automatically identifies the target OS (Linux, Windows CMD, Windows PowerShell) and adjusts its behavior accordingly.
--   **Extensible Input/Output Scripts**: Manipulate command payloads and server responses on-the-fly with a chain of scripts (e.g., `base64encode`, `urlencode`, `unescape`, `space2ifs`).
--   **Built-in Custom Commands**: Powerful custom commands like `download` and `upload` that abstract away OS-specific complexities for file transfers.
--   **Flexible HTTP Configuration**: Full control over HTTP requests, including method, headers, cookies, and body (form-data or JSON).
--   **Extensible by Design**: Easily add your own custom commands and scripts to tailor WShell to your needs.
--   **Agentless**: No need to upload a separate web shell file; WShell leverages the existing vulnerability.
+- **Interactive Pseudo-Shell**: Experience a shell with support for commands like `cd` and a persistent command history.
+- **Automatic OS Detection**: Automatically identifies the target OS (Linux, Windows CMD, Windows PowerShell) and adjusts its behavior accordingly.
+- **Extensible Input/Output Scripts**: Manipulate command payloads and server responses on-the-fly with a chain of scripts (e.g., `base64encode`, `urlencode`, `unescape`, `space2ifs`).
+- **Built-in Custom Commands**: Powerful custom commands like `download` and `upload` that abstract away OS-specific complexities for file transfers.
+- **Flexible HTTP Configuration**: Full control over HTTP requests, including method, headers, cookies, and body (form-data or JSON).
+- **Extensible by Design**: Easily add your own custom commands and scripts to tailor WShell to your needs.
+- **Agentless**: No need to upload a separate web shell file; WShell leverages the existing vulnerability.
 
 ## 🚀 Getting Started
 
@@ -90,8 +90,8 @@ The basic syntax is:
 wshell [OPTIONS] URL [REQUEST_ITEMS...]
 ```
 
--   `URL`: The vulnerable endpoint.
--   `REQUEST_ITEMS`: HTTP headers (`Key: value`) and body parameters (`key=value`) for the request. The `WSHELL` placeholder can be placed in one of these items or in the URL.
+- `URL`: The vulnerable endpoint.
+- `REQUEST_ITEMS`: HTTP headers (`Key: value`) and body parameters (`key=value`) for the request. The `WSHELL` placeholder can be placed in one of these items or in the URL.
 
 ### Command-Line Arguments
 
@@ -255,5 +255,5 @@ This project is licensed under the GPL-3.0 License. See the [LICENSE](https://gi
 
 <p align="center">Made with 💙 by <a href="https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell" target="_blank">Unlock Security</a></p>
 <p align="center">
-    <img src="https://www.unlock-security.it/wp-content/uploads/2022/12/logo.svg" width="150">
+    <img src="https://www.unlock-security.it/wp-content/uploads/2026/04/unlock-security-registered-logo-rgb.svg" width="150">
 </p>

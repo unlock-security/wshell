@@ -77,6 +77,16 @@ class CommandInjector:
         )
         return self._extract_output(response.text, placeholder, strip=strip)
 
+    @property
+    def timeout(self) -> float | None:
+        """Expose the HTTP timeout as a cmd2 settable on the injector."""
+
+        return self.http_client.timeout
+
+    @timeout.setter
+    def timeout(self, value: float | None) -> None:
+        self.http_client.timeout = value
+
     def detect_os(self) -> OSEnum:
         """Try to identify the remote OS."""
 

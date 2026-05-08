@@ -44,3 +44,11 @@ class WrongCommandSetTypeError(WShellError):
 class CommandConflictError(WShellError):
     """Raised when two command sets try to implement the same command."""
     EXIT_STATUS = ExitStatus.ERROR_COMMAND_CONFLICT
+
+
+class ConfigError(WShellError):
+    """The runtime configuration is invalid."""
+
+
+class InvalidRequestItemError(ConfigError):
+    """A request item is neither a valid header nor body parameter."""

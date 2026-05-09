@@ -5,6 +5,8 @@ from typing import Any
 
 import requests
 
+MAX_TRACE_BODY_CHARS = 1024
+
 
 def render_request_trace(request: requests.PreparedRequest, trace_id: str) -> str:
     """Render a prepared request as a multi-line debug block."""
@@ -42,7 +44,15 @@ def _format_headers(headers: ItemsView[str, str], prefix: str) -> list[str]:
 
 def _format_body(body: bytes | str | None, prefix: str) -> list[str]:
     text = _coerce_body(body)
-    return [f"{prefix}{line}" for line in text.splitlines()] or [prefix.rstrip()]
+    truncated_text = text[:MAX_TRACE_BODY_CHARS]
+    was_truncated = len(text) > MAX_TRACE_BODY_CHARS
+
+    lines = [f"{prefix}{line}" for line in truncated_text.splitlines()] or [prefix.rstrip()]
+
+    if was_truncated:
+        lines.append(f"[truncated body: showing {len(truncated_text)} of {len(text)} chars]")
+
+    return lines
 
 
 def _coerce_body(body: bytes | str | None) -> str:

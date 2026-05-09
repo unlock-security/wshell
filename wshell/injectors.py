@@ -173,7 +173,8 @@ class CommandInjector:
             raise CommandExecutionError("Failed to parse command output")
 
         command_output = match.group("command_output")
-        logger.debug("cmd#%s extracted output", trace_id)
+        output_size = len(command_output.encode("utf-8"))
+        logger.debug("cmd#%s extracted output (%sB)", trace_id, output_size)
         return command_output if not strip else command_output.strip()
 
     def _remove_commented_out(self, cmd: str) -> str:

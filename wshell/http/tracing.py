@@ -1,6 +1,7 @@
 """HTTP debug trace rendering helpers."""
 
 from collections.abc import ItemsView
+from typing import Any
 
 import requests
 
@@ -9,7 +10,7 @@ def render_request_trace(request: requests.PreparedRequest, trace_id: str) -> st
     """Render a prepared request as a multi-line debug block."""
 
     lines = [
-        f"http#{trace_id} request",
+        f"http#{trace_id} request ({_body_size(request.body)}B body)",
         f"> {request.method} {request.url}",
         *_format_headers(request.headers.items(), prefix="> "),
         ">",
@@ -18,11 +19,11 @@ def render_request_trace(request: requests.PreparedRequest, trace_id: str) -> st
     return "\n".join(lines)
 
 
-def render_response_trace(response: requests.Response, trace_id: str) -> str:
+def render_response_trace(response: requests.Response, trace_id: str, elapsed_ms: float) -> str:
     """Render a response as a multi-line debug block."""
 
     lines = [
-        f"http#{trace_id} response",
+        f"http#{trace_id} response ({elapsed_ms:.1f}ms, {_body_size(response.content)}B body)",
         f"< HTTP {response.status_code} {response.reason}",
         *_format_headers(response.headers.items(), prefix="< "),
         "<",
@@ -47,3 +48,11 @@ def _coerce_body(body: bytes | str | None) -> str:
     if isinstance(body, bytes):
         return body.decode("utf-8", errors="replace")
     return str(body)
+
+
+def _body_size(body: Any) -> int:
+    if body is None:
+        return 0
+    if isinstance(body, bytes):
+        return len(body)
+    return len(str(body).encode("utf-8"))

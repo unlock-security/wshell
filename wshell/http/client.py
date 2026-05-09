@@ -60,8 +60,10 @@ class HttpClient:
         logger.debug("%s", render_request_trace(prepared_request, trace_id))
 
         try:
+            start_time = time.perf_counter()
             response = self._send_prepared_request(prepared_request)
-            logger.debug("%s", render_response_trace(response, trace_id))
+            elapsed_ms = (time.perf_counter() - start_time) * 1000
+            logger.debug("%s", render_response_trace(response, trace_id, elapsed_ms))
             return response
         except requests.exceptions.ConnectionError as err:
             raise TargetUnreachableError(err) from err

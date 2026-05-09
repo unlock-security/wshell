@@ -23,7 +23,10 @@ def render_response_trace(response: requests.Response, trace_id: str, elapsed_ms
     """Render a response as a multi-line debug block."""
 
     lines = [
-        f"http#{trace_id} response ({elapsed_ms:.1f}ms, {_body_size(response.content)}B body)",
+        (
+            f"http#{trace_id} <- {response.status_code} {response.reason} "
+            f"in {elapsed_ms:.1f}ms ({_body_size(response.content)}B body)"
+        ),
         f"< HTTP {response.status_code} {response.reason}",
         *_format_headers(response.headers.items(), prefix="< "),
         "<",

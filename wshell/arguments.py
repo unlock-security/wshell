@@ -7,7 +7,6 @@ import argparse
 import os
 import sys
 import textwrap
-from typing import List
 
 import wshell.constants
 from wshell import validators
@@ -16,7 +15,7 @@ from wshell.enums import OSEnum
 from wshell.scripts import input_scripts, output_scripts
 
 
-def parse_args(args: List[str]) -> argparse.Namespace:
+def parse_args(args: list[str]) -> argparse.Namespace:
     """
     Parses command-line arguments.
     """

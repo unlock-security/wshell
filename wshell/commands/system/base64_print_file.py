@@ -17,10 +17,10 @@ class Base64PrintFileCommandSet(WShellCommandSet):
     def on_register(self, cmd: Cmd) -> None:
         super().on_register(cmd)
         if cmd.injector.is_windows_cmd():
-            setattr(cmd, "do_type", self.get_file_content)
+            cmd.do_type = self.get_file_content
             cmd.hidden_commands.append("type")
         else:
-            setattr(cmd, "do_cat", self.get_file_content)
+            cmd.do_cat = self.get_file_content
             cmd.hidden_commands.append("cat")
 
     def get_file_content(self, filename: str):

@@ -1,8 +1,4 @@
-"""
-A central registry for wshell commands to prevent conflicts and manage categories.
-"""
-
-from typing import Dict, List, Type
+"""A central registry for wshell commands to prevent conflicts and manage categories."""
 
 from cmd2 import categorize
 
@@ -15,10 +11,10 @@ class CommandRegistry:
     It prevents command name collisions and manages command categories.
     """
     def __init__(self):
-        self._commands: Dict[str, str] = {}  # { 'command_name': 'OwningClassName' }
-        self._command_sets: List[Type] = []
+        self._commands: dict[str, str] = {}  # { 'command_name': 'OwningClassName' }
+        self._command_sets: list[type] = []
 
-    def register(self, command_set_cls: Type, category_name: str) -> None:
+    def register(self, command_set_cls: type, category_name: str) -> None:
         """
         Inspects a command set class and registers it, checking for conflicts.
 
@@ -41,7 +37,7 @@ class CommandRegistry:
 
         self._command_sets.append(command_set_cls)
 
-    def get_command_sets(self) -> List[Type]:
+    def get_command_sets(self) -> list[type]:
         """Returns the list of all validated and registered command set classes."""
         return self._command_sets
 

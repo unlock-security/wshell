@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import itertools
 import random
 import re
 from collections.abc import Mapping, Sequence
@@ -44,6 +45,7 @@ class CommandInjector:
     COMMAND_DELIMITER = ";"
     PATH_DELIMITER = "/"
     CURRENT_DIRECTORY_COMMAND = ""
+    TRACE_COUNTER = itertools.count(1)
 
     def __init__(
         self,
@@ -66,16 +68,18 @@ class CommandInjector:
     def execute(self, cmd: str, strip: bool = True) -> str:
         """Execute the specified command on the target."""
 
+        trace_id = str(next(self.TRACE_COUNTER))
         placeholder = self._generate_output_placeholder()
-        rendered_command = self._prepare_command(cmd, placeholder)
+        rendered_command = self._prepare_command(cmd, placeholder, trace_id)
         request = self._render_request(rendered_command)
         response = self.http_client.send_request(
+            trace_id,
             self.request.method,
             request.url,
             headers=request.headers,
             **request.body_kwargs,
         )
-        return self._extract_output(response.text, placeholder, strip=strip)
+        return self._extract_output(response.text, placeholder, trace_id=trace_id, strip=strip)
 
     @property
     def timeout(self) -> float | None:
@@ -120,10 +124,10 @@ class CommandInjector:
     def _generate_output_placeholder(self) -> str:
         return hashlib.md5(f"wshell-{random.random()}".encode()).hexdigest()
 
-    def _prepare_command(self, cmd: str, placeholder: str) -> str:
+    def _prepare_command(self, cmd: str, placeholder: str, trace_id: str) -> str:
         cmd = self._remove_commented_out(cmd)
         cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
-        logger.debug(f"Executing command: {cmd}")
+        logger.debug("cmd#%s execute: %s", trace_id, cmd)
         # The command to run is wrapped around some placeholder to be able to correctly identify the
         # command output even if there is some garbage or the server print the raw command in the
         # response page too.
@@ -138,7 +142,7 @@ class CommandInjector:
         #   uid=0(root) gid=0(root) groups=0(root)
         #
         wrapped_command = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "  # noqa: E501
-        logger.debug(f"Using placeholder: {placeholder}")
+        logger.debug("cmd#%s placeholder: %s", trace_id, placeholder)
         return self.input_pipeline.run(wrapped_command)
 
     def _render_request(self, command: str) -> RenderedRequest:
@@ -156,7 +160,7 @@ class CommandInjector:
             body_kwargs=body_kwargs,
         )
 
-    def _extract_output(self, output: str, placeholder: str, *, strip: bool) -> str:
+    def _extract_output(self, output: str, placeholder: str, trace_id: str, strip: bool) -> str:
         output = self.output_pipeline.run(output)
         match = re.search(
             rf"{placeholder}(?:\r?\n|\ )(?P<command_output>.*?){placeholder}(?:\r?\n|\ )",
@@ -165,10 +169,11 @@ class CommandInjector:
         )
 
         if not match:
-            logger.debug(f"Got unexpected HTTP response:\n{output}")
+            logger.debug("cmd#%s unexpected response:\n%s", trace_id, output)
             raise CommandExecutionError("Failed to parse command output")
 
         command_output = match.group("command_output")
+        logger.debug("cmd#%s extracted output", trace_id)
         return command_output if not strip else command_output.strip()
 
     def _remove_commented_out(self, cmd: str) -> str:
@@ -198,7 +203,7 @@ class CommandInjector:
         self.cwd = self.execute(
             f"cd {directory}{self.COMMAND_DELIMITER}{self.CURRENT_DIRECTORY_COMMAND}"
         )
-        logger.debug(f"Directory changed to: {self.cwd}")
+        logger.debug("Directory changed to: %s", self.cwd)
         return self.cwd
 
     def current_directory(self) -> str:

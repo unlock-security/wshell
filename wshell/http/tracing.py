@@ -5,11 +5,11 @@ from collections.abc import ItemsView
 import requests
 
 
-def render_request_trace(request: requests.PreparedRequest) -> str:
+def render_request_trace(request: requests.PreparedRequest, trace_id: str) -> str:
     """Render a prepared request as a multi-line debug block."""
 
     lines = [
-        "HTTP request",
+        f"http#{trace_id} request",
         f"> {request.method} {request.url}",
         *_format_headers(request.headers.items(), prefix="> "),
         ">",
@@ -18,11 +18,11 @@ def render_request_trace(request: requests.PreparedRequest) -> str:
     return "\n".join(lines)
 
 
-def render_response_trace(response: requests.Response) -> str:
+def render_response_trace(response: requests.Response, trace_id: str) -> str:
     """Render a response as a multi-line debug block."""
 
     lines = [
-        "HTTP response",
+        f"http#{trace_id} response",
         f"< HTTP {response.status_code} {response.reason}",
         *_format_headers(response.headers.items(), prefix="< "),
         "<",

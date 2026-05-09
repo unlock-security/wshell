@@ -36,6 +36,7 @@ class HttpClient:
 
     def send_request(
         self,
+        trace_id: str,
         method: str,
         url: str,
         headers: dict[str, str] | None = None,
@@ -56,11 +57,11 @@ class HttpClient:
             json=json,
         )
 
-        logger.debug("%s", render_request_trace(prepared_request))
+        logger.debug("%s", render_request_trace(prepared_request, trace_id))
 
         try:
             response = self._send_prepared_request(prepared_request)
-            logger.debug("%s", render_response_trace(response))
+            logger.debug("%s", render_response_trace(response, trace_id))
             return response
         except requests.exceptions.ConnectionError as err:
             raise TargetUnreachableError(err) from err

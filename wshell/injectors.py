@@ -130,14 +130,14 @@ class CommandInjector:
         #
         # Example:
         #   $ echo 7ddf32e17a6ac5ce04a8ecbf782ca509;id;echo 7ddf32e17a6ac5ce04a8ecbf782ca509
-        #   7ddf32e17a6ac5ce04a8ecbf782ca509\nuid=0(root) gid=0(root) groups=0(root)7ddf32e17a6ac5ce04a8ecbf782ca509\n
+        #   7ddf32e17a6ac5ce04a8ecbf782ca509\nuid=0(root) gid=0(root) groups=0(root)7ddf32e17a6ac5ce04a8ecbf782ca509\n  # noqa: E501
         #
         # We will then extract every output delimited by '7ddf32e17a6ac5ce04a8ecbf782ca509\n' to get
         # as output:
         #
         #   uid=0(root) gid=0(root) groups=0(root)
         #
-        wrapped_command = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "
+        wrapped_command = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "  # noqa: E501
         logger.debug(f"Using placeholder: {placeholder}")
         return self.input_pipeline.run(wrapped_command)
 

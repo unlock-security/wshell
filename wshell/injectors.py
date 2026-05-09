@@ -69,6 +69,7 @@ class CommandInjector:
         """Execute the specified command on the target."""
 
         trace_id = str(next(self.TRACE_COUNTER))
+        logger.debug(f"cmd#{trace_id} directory={self.cwd}, command: {cmd}")
         placeholder = self._generate_output_placeholder()
         rendered_command = self._prepare_command(cmd, placeholder, trace_id)
         request = self._render_request(rendered_command)
@@ -127,7 +128,6 @@ class CommandInjector:
     def _prepare_command(self, cmd: str, placeholder: str, trace_id: str) -> str:
         cmd = self._remove_commented_out(cmd)
         cmd = f"cd {self.cwd}{self.COMMAND_DELIMITER}{cmd}"
-        logger.debug("cmd#%s execute: %s", trace_id, cmd)
         # The command to run is wrapped around some placeholder to be able to correctly identify the
         # command output even if there is some garbage or the server print the raw command in the
         # response page too.
@@ -142,8 +142,10 @@ class CommandInjector:
         #   uid=0(root) gid=0(root) groups=0(root)
         #
         wrapped_command = f"echo {placeholder}{self.COMMAND_DELIMITER}{cmd}{self.COMMAND_DELIMITER}echo {placeholder} "  # noqa: E501
-        logger.debug("cmd#%s placeholder: %s", trace_id, placeholder)
-        return self.input_pipeline.run(wrapped_command)
+        logger.debug(f"cmd#{trace_id} placeholder: {placeholder}")
+        transformed_command = self.input_pipeline.run(wrapped_command)
+        logger.debug(f"cmd#{trace_id} payload: {transformed_command}")
+        return transformed_command
 
     def _render_request(self, command: str) -> RenderedRequest:
         headers = {

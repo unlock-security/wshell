@@ -47,7 +47,7 @@ wshell = "wshell.__main__:main"
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
-  "ruff>=0.6",
+  "ruff>=0.15.12",
 ]
 
 [tool.setuptools.dynamic]

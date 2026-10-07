@@ -84,6 +84,9 @@ Pushing to `main` runs the release workflow, including after merging `dev` local
 or merging a pull request on GitHub. It tests `main`, updates `wshell/__init__.py`,
 commits the new version, and publishes a GitHub tag and release with generated
 release notes.
+The README release badge reads the latest stable release from GitHub through
+Shields.io and refreshes automatically after publication, subject to badge
+caching. Its link always points to GitHub's latest release.
 The workflow uses shell commands and the Python 3.12, Git, and GitHub CLI tools
 preinstalled on the Ubuntu 24.04 runner. It does not require external GitHub
 Actions, so it works with the organization policy allowing only actions owned by

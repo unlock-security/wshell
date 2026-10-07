@@ -5,7 +5,7 @@
 <p align="center">
     <a href="https://docs.python.org/3/"><img src="https://img.shields.io/badge/python-3-green.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3"></a>
     <a href="https://github.com/unlock-security/wshell/blob/main/LICENSE"><img src="https://img.shields.io/github/license/unlock-security/wshell?style=for-the-badge&label=License&color=red" alt="WShell License"></a>
-    <a href="https://github.com/unlock-security/wshell/releases/latest"><img src="https://img.shields.io/github/v/release/unlock-security/wshell?include_prereleases&sort=semver&display_name=release&style=for-the-badge" alt="GitHub Release"></a>
+    <a href="https://github.com/unlock-security/wshell/releases/latest"><img src="https://img.shields.io/github/v/release/unlock-security/wshell?sort=date&display_name=tag&style=for-the-badge" alt="Latest stable GitHub release"></a>
     <a href="https://www.unlock-security.it/?utm_source=github&utm_medium=repo&utm_campaign=wshell"><img src="https://img.shields.io/badge/Made_by-🔓_Unlock_Security-blue.svg?style=for-the-badge" alt="Made by Unlock Security"></a>
 </p>
 

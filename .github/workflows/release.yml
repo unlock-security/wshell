@@ -15,22 +15,26 @@ concurrency:
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - name: Check out main and all release tags
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          ref: main
-          fetch-depth: 0
-          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        shell: bash
+        run: |
+          gh auth setup-git --hostname github.com
+          git init .
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          git fetch --tags origin '+refs/heads/main:refs/remotes/origin/main'
+          git checkout --track -b main origin/main
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: '3.12'
-          cache: pip
+        shell: bash
+        run: |
+          python3.12 -m venv "$RUNNER_TEMP/wshell-release-venv"
+          echo "$RUNNER_TEMP/wshell-release-venv/bin" >> "$GITHUB_PATH"
 
       - name: Install development dependencies
         run: python -m pip install -e '.[dev]'
@@ -45,6 +49,7 @@ jobs:
       - name: Commit version and push tag
         if: steps.version.outputs.commit == 'true'
         env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.tag }}
         run: |
           git config user.name 'github-actions[bot]'

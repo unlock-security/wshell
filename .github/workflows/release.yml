@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.ref == 'dev' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main and all release tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Plan release and update package version
+        id: version
+        run: python .github/scripts/prepare_release.py
+
+      - name: Commit version and push tag
+        if: steps.version.outputs.commit == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add wshell/__init__.py
+          git commit -m "chore(release): $RELEASE_TAG"
+          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+          git push --atomic origin HEAD:main "refs/tags/$RELEASE_TAG"
+
+      - name: Publish GitHub release
+        if: steps.version.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          PREVIOUS_TAG: ${{ steps.version.outputs.previous_tag }}
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists."
+            exit 0
+          fi
+          notes_args=()
+          if [ -n "$PREVIOUS_TAG" ]; then
+            notes_args+=(--notes-start-tag "$PREVIOUS_TAG")
+          fi
+          gh release create "$RELEASE_TAG" --verify-tag --generate-notes \
+            --title "$RELEASE_TAG" --latest "${notes_args[@]}"

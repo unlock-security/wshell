@@ -77,3 +77,36 @@ When you open a Pull Request, please make sure to follow the following rules:
 - In the description, write a clear and detailed explanation of the changes
 - There are no conflicts in merging your branch on `dev`
 - If you are fixing a bug, please reference the issue number
+
+### Automatic releases
+
+Merging a pull request from this repository's `dev` branch into `main` runs the
+release workflow. It tests `main`, updates `wshell/__init__.py`, commits the new
+version, and publishes a GitHub tag and release with generated release notes.
+Each release use the highest change level among commits since the previous
+stable release:
+
+- `fix:` or `perf:` increments the patch version.
+- `feat:` increments the minor version.
+- `!` after the type or scope, or a `BREAKING CHANGE:` / `BREAKING-CHANGE:` footer,
+  increments the major version, including for versions below `1.0.0`.
+- Other types, such as `docs:`, `chore:`, and `test:`, do not trigger a release.
+
+Use a merge commit or rebase merge to preserve individual commit messages. With
+squash merges, the final squash commit must use the appropriate Conventional
+Commit message, including any breaking-change footer.
+
+The workflow uses the built-in `GITHUB_TOKEN`; no separate secret is needed when
+these writes are permitted. If branch rules require a different actor, set the
+`RELEASE_TOKEN` repository secret to a token for an actor allowed to push the
+version commit and tags. That token needs repository Contents read/write permission.
+After a release, merge `main` back into `dev` to keep the version commit in sync.
+
+To preview the next release locally without changing files, run:
+
+```sh
+python .github/scripts/prepare_release.py --dry-run
+```
+
+If publishing fails after the tag is pushed, rerun the failed workflow to finish
+creating that release without another version bump.

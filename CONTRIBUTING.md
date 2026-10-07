@@ -80,10 +80,11 @@ When you open a Pull Request, please make sure to follow the following rules:
 
 ### Automatic releases
 
-Merging a pull request from this repository's `dev` branch into `main` runs the
-release workflow. It tests `main`, updates `wshell/__init__.py`, commits the new
-version, and publishes a GitHub tag and release with generated release notes.
-Each release use the highest change level among commits since the previous
+Pushing to `main` runs the release workflow, including after merging `dev` locally
+or merging a pull request on GitHub. It tests `main`, updates `wshell/__init__.py`,
+commits the new version, and publishes a GitHub tag and release with generated
+release notes.
+Each release uses the highest change level among commits since the previous
 stable release:
 
 - `fix:` or `perf:` increments the patch version.
@@ -110,3 +111,5 @@ python .github/scripts/prepare_release.py --dry-run
 
 If publishing fails after the tag is pushed, rerun the failed workflow to finish
 creating that release without another version bump.
+You can also start the Release workflow manually from GitHub's Actions tab by
+selecting Run workflow with `main` as the branch.

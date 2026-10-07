@@ -1,9 +1,8 @@
-import argparse
 import base64
 import math
 import os
 
-from cmd2 import with_argparser
+from cmd2 import Cmd2ArgumentParser, with_argparser
 
 from wshell import utils, validators
 from wshell.commands import WShellCommandSet
@@ -12,7 +11,7 @@ from wshell.log import logger
 
 class UploadFileCommandSet(WShellCommandSet):
 
-    argument_parser = argparse.ArgumentParser(description="Upload local file")
+    argument_parser = Cmd2ArgumentParser(description="Upload local file")
     argument_parser.add_argument(
         "-l", "--local",
         metavar="FILENAME",

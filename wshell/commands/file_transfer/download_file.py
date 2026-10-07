@@ -1,10 +1,9 @@
-import argparse
 import binascii
 import math
 import os
 from base64 import b64decode
 
-from cmd2 import with_argparser
+from cmd2 import Cmd2ArgumentParser, with_argparser
 
 from wshell import utils, validators
 from wshell.commands import WShellCommandSet
@@ -14,7 +13,7 @@ from wshell.log import logger
 
 class DownloadFileCommandSet(WShellCommandSet):
 
-    argument_parser = argparse.ArgumentParser(description="Download remote file")
+    argument_parser = Cmd2ArgumentParser(description="Download remote file")
     argument_parser.add_argument(
         "-r", "--remote",
         metavar="FILENAME",

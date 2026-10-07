@@ -155,12 +155,11 @@ Use `self._cmd.injector` to run commands on the target, and `self._dispatch()` t
 
 ```python
 # wshell/commands/php/phpinfo.py
-import argparse
-from cmd2 import with_argparser
+from cmd2 import Cmd2ArgumentParser, with_argparser
 from wshell.commands import WShellCommandSet
 
 class PHPInfoCommandSet(WShellCommandSet):
-    _argparser = argparse.ArgumentParser(description="Create a phpinfo() file.")
+    _argparser = Cmd2ArgumentParser(description="Create a phpinfo() file.")
     _argparser.add_argument("-f", "--filename", default="info.php", help="Name of the file.")
 
     @with_argparser(_argparser)
@@ -208,6 +207,9 @@ cd wshell/
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
+
+# To run tests
+python -m pytest
 ```
 
 ## Contributing
